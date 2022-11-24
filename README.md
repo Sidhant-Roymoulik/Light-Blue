@@ -1,2 +1,2 @@
-# Light-Blue
-Chess Engine Built in Golang
+# Light Blue
+A Chess Engine Built in Golang
