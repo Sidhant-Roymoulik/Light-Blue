@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Chess Engine built in Golang
 
 ---
@@ -43,7 +42,3 @@ Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https
 Chess.js: https://github.com/jhlywa/chess.js/blob/master/README.md   
 
 Chessboard.js: https://chessboardjs.com/
-=======
-# Light Blue
-A Chess Engine Built in Golang
->>>>>>> 0e50299d3c8a9362388668134872bb4ba31e348c
