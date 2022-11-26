@@ -41,4 +41,4 @@ Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https
 
 Chess.js: https://github.com/jhlywa/chess.js/blob/master/README.md   
 
-Chessboard.js: https://chessboardjs.com/  
+Chessboard.js: https://chessboardjs.com/
