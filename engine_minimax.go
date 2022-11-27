@@ -44,7 +44,7 @@ func minimax_start(position *chess.Position, ply int, turn bool) (best_eval int,
 }
 func minimax(position *chess.Position, ply int, turn bool) (best_eval int) {
 	if ply > MAX_CONST_DEPTH {
-		return eval_v1(position) * getMultiplier(turn)
+		return eval_v1(position) * getMultiplier(position)
 	}
 	states++
 	best_eval = math.MaxInt * -1

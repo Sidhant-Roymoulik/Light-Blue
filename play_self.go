@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
@@ -31,7 +33,9 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 			panic(err)
 		}
 
-		print("Eval:", eval/100, "Move:", move.String())
+		print("Move:", move.String())
+		print("Eval:", float32(-1*eval*getMultiplier(game.Position()))/100.0)
+		print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
 		print("Positions Checked:", states)
 		print("Q-Positions Checked:", q_states)
 		print(game.FEN())

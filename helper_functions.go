@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/Sidhant-Roymoulik/chess"
 )
@@ -11,6 +12,7 @@ func print(str ...any) {
 }
 
 func resetCounters() {
+	start = time.Now()
 	states = 0
 	q_states = 0
 	hashes = 0
@@ -24,8 +26,8 @@ func game_from_fen(str string) *chess.Game {
 	return chess.NewGame(fen)
 }
 
-func getMultiplier(turn bool) int {
-	if turn {
+func getMultiplier(position *chess.Position) int {
+	if position.Turn() == chess.White {
 		return 1
 	} else {
 		return -1

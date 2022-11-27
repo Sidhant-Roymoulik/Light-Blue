@@ -44,13 +44,13 @@ func minimax_start_ab(position *chess.Position, ply int, turn bool) (best_eval i
 }
 func minimax_ab(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	if ply > MAX_CONST_DEPTH {
-		return eval_v1(position) * getMultiplier(turn)
+		return eval_v2(position) * getMultiplier(position)
 	}
 	states++
 	best_eval = math.MaxInt * -1
 	moves := position.ValidMoves()
 	for _, move := range moves {
-		new_eval := minimax_ab(position.Update(move), ply+1, !turn, alpha, beta) * -1
+		new_eval := minimax_ab(position.Update(move), ply+1, !turn, -beta, -alpha) * -1
 		if new_eval > best_eval {
 			best_eval = new_eval
 		}
