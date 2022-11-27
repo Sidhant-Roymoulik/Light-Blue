@@ -23,14 +23,6 @@
 
 ---
 
-Instructions for use:
-
-- Download the repo.  
-- Open index.html in a browser.   
-- Live Server extension in VSCode reccomended.   
-  
----
-
 Challenged by Will Depue ([0hq](https://github.com/0hq)).
 
 Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https://github.com/0hq/starter_chess_engine).
