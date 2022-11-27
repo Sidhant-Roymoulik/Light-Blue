@@ -24,6 +24,14 @@
 
 ---
 
+Instructions for use:
+
+- Download the repo.  
+- Open index.html in a browser.   
+- Live Server extension in VSCode reccomended.   
+  
+---
+
 Challenged by Will Depue ([0hq](https://github.com/0hq)).
 
 Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https://github.com/0hq/starter_chess_engine).
@@ -32,4 +40,9 @@ Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https
 
 ### Libraries
 
-Chess for Golang: https://github.com/Sidhant-Roymoulik/chess
+Chess.js: https://github.com/jhlywa/chess.js/blob/master/README.md   
+
+Chessboard.js: https://chessboardjs.com/
+=======
+# Light Blue
+A Chess Engine Built in Golang
