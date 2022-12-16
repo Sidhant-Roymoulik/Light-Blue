@@ -13,7 +13,7 @@ type e_minimax_ab struct {
 func new_engine_minimax_ab() e_minimax_ab {
 	return e_minimax_ab{
 		EngineClass{
-			name: "Minimax_AB",
+			name: "Minimax with Alpha-Beta Pruning",
 			upgrades: EngineUpgrades{
 				move_ordering:       false,
 				alphabeta:           true,
@@ -44,7 +44,7 @@ func minimax_start_ab(position *chess.Position, ply int, turn bool) (best_eval i
 }
 func minimax_ab(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	if ply > MAX_CONST_DEPTH {
-		return eval_v2(position) * getMultiplier(position)
+		return eval_v2(position) * getMultiplier(turn)
 	}
 	states++
 	best_eval = math.MaxInt * -1

@@ -13,7 +13,7 @@ type e_minimax_mo_ab struct {
 func new_engine_minimax_mo_ab() e_minimax_mo_ab {
 	return e_minimax_mo_ab{
 		EngineClass{
-			name: "Minimax_MO_AB",
+			name: "Minimax with Move Ordering and Alpha-Beta Pruning",
 			upgrades: EngineUpgrades{
 				move_ordering:       true,
 				alphabeta:           true,
@@ -27,14 +27,16 @@ func new_engine_minimax_mo_ab() e_minimax_mo_ab {
 
 func (engine *e_minimax_mo_ab) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
-	best_eval, best_move = minimax_start_mo_ab(position, 0, position.Turn() == chess.White)
+	best_eval, best_move = engine.minimax_start(position, 0, position.Turn() == chess.White)
 	return
 }
-func minimax_start_mo_ab(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
-	best_eval = math.MaxInt * -1
+func (engine *e_minimax_mo_ab) minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
 	moves := move_ordering_v1(position)
+
+	best_eval = math.MaxInt * -1
 	for _, move := range moves {
-		new_eval := minimax_mo_ab(position.Update(move), ply+1, !turn, math.MaxInt*-1, math.MaxInt) * -1
+		new_eval := engine.minimax(position.Update(move), ply+1, !turn, math.MaxInt*-1, math.MaxInt) * -1
+
 		if new_eval > best_eval {
 			best_eval = new_eval
 			best_move = move
@@ -42,24 +44,29 @@ func minimax_start_mo_ab(position *chess.Position, ply int, turn bool) (best_eva
 	}
 	return best_eval, best_move
 }
-func minimax_mo_ab(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
-	if ply > MAX_CONST_DEPTH {
-		return eval_v2(position) * getMultiplier(position)
-	}
+func (engine *e_minimax_mo_ab) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	states++
-	best_eval = math.MaxInt * -1
+
+	if ply > MAX_CONST_DEPTH {
+		return eval_v3(position) * getMultiplier(turn)
+	}
+
 	moves := move_ordering_v1(position)
+
+	best_eval = math.MaxInt * -1
 	for _, move := range moves {
-		new_eval := minimax_mo_ab(position.Update(move), ply+1, !turn, -beta, -alpha) * -1
+		new_eval := engine.minimax(position.Update(move), ply+1, !turn, -beta, -alpha) * -1
+
 		if new_eval > best_eval {
 			best_eval = new_eval
 		}
-		if beta <= best_eval {
+
+		if best_eval >= beta {
 			return beta
 		}
-		if alpha <= best_eval {
+		if best_eval >= alpha {
 			alpha = best_eval
 		}
 	}
-	return best_eval
+	return alpha
 }

@@ -34,7 +34,7 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 		}
 
 		print("Move:", move.String())
-		print("Eval:", float32(-1*eval*getMultiplier(game.Position()))/100.0)
+		print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 		print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
 		print("Positions Checked:", states)
 		print("Q-Positions Checked:", q_states)

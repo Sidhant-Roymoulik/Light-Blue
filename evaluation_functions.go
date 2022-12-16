@@ -29,7 +29,6 @@ func eval_move_v1(move *chess.Move, board *chess.Board) int {
 
 	if move.HasTag(chess.MoveTag(chess.Capture)) {
 		delta += PVM[chess.PieceType(board.Piece(move.S2()))]
-		delta -= PVM[chess.PieceType(board.Piece(move.S1()))]
 	}
 	if move.HasTag(chess.MoveTag(chess.Check)) {
 		delta += 25
@@ -47,13 +46,6 @@ func eval_move_v1(move *chess.Move, board *chess.Board) int {
 // Sums value of pieces and checks for game-over states
 
 func eval_v1(position *chess.Position) int {
-	squares := position.Board().SquareMap()
-	var delta int = 0
-	for _, piece := range squares {
-		var turn int = getMultiplier(position)
-		delta += PVM[piece.Type()] * turn
-	}
-
 	// faster than doing two comparisons
 	if position.Status() != chess.NoMethod {
 		if position.Status() == chess.Stalemate {
@@ -68,6 +60,11 @@ func eval_v1(position *chess.Position) int {
 		}
 	}
 
+	squares := position.Board().SquareMap()
+	var delta int = 0
+	for _, piece := range squares {
+		delta += PVM[piece.Type()] * getMultiplier(piece.Color() == chess.White)
+	}
 	return delta
 }
 
@@ -147,18 +144,6 @@ var PST_MG = map[chess.PieceType][]int{
 
 // Also uses PST
 func eval_v2(position *chess.Position) int {
-	squares := position.Board().SquareMap()
-	var delta int = 0
-	for square, piece := range squares {
-		if piece.Color() == chess.White {
-			delta += PVM[piece.Type()]
-			delta += PST_MG[piece.Type()][square]
-		} else {
-			delta -= PVM[piece.Type()]
-			delta -= PST_MG[piece.Type()][FLIP[square]]
-		}
-	}
-
 	// faster than doing two comparisons
 	if position.Status() != chess.NoMethod {
 		if position.Status() == chess.Stalemate {
@@ -171,6 +156,56 @@ func eval_v2(position *chess.Position) int {
 				return CHECKMATE_VALUE
 			}
 		}
+	}
+
+	squares := position.Board().SquareMap()
+	var delta int = 0
+	for square, piece := range squares {
+		if piece.Color() == chess.White {
+			delta += PVM[piece.Type()]
+			delta += PST_MG[piece.Type()][square]
+		} else {
+			delta -= PVM[piece.Type()]
+			delta -= PST_MG[piece.Type()][FLIP[square]]
+		}
+	}
+	return delta
+}
+
+// Give Mobility Bonus
+func eval_v3(position *chess.Position) int {
+	// faster than doing two comparisons
+	if position.Status() != chess.NoMethod {
+		if position.Status() == chess.Stalemate {
+			return 0
+		}
+		if position.Status() == chess.Checkmate {
+			if position.Turn() == chess.White {
+				return -CHECKMATE_VALUE
+			} else {
+				return CHECKMATE_VALUE
+			}
+		}
+	}
+
+	squares := position.Board().SquareMap()
+	var delta int = 0
+	for square, piece := range squares {
+		if piece.Color() == chess.White {
+			delta += PVM[piece.Type()]
+			delta += PST_MG[piece.Type()][square]
+		} else {
+			delta -= PVM[piece.Type()]
+			delta -= PST_MG[piece.Type()][FLIP[square]]
+		}
+	}
+
+	if position.Turn() == chess.White {
+		delta += len(position.ValidMoves())
+		// delta -= len(position.NullMove().ValidMoves())
+	} else {
+		delta -= len(position.ValidMoves())
+		// delta += len(position.NullMove().ValidMoves())
 	}
 
 	return delta
