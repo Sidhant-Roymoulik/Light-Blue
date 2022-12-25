@@ -9,25 +9,27 @@ A Chess Engine Built in Golang
  - [x] Piece Square Tables
  - [x] Move Ordering
  - [x] Alpha-Beta Pruning
- - [ ] Quiescence Search
- - [ ] Iterative Deepening
+ - [x] Quiescence Search
+ - [x] Iterative Deepening
  - [ ] Transposition/Hash Tables
  
 ### Additional Optimizations
 
- - [ ] Parrallel Processing (Use Golang)
+ - [ ] MTD(bi)
+ - [ ] Parrallel Processing (Use Golang) (Will insert use case)
  - [ ] Openings
  - [ ] Tablebases
  - [ ] Monte-Carlo Tree Search
  - [ ] Endgames
- - [ ] Principal Variation Search
  - [ ] Razoring
 
 ---
 
 Challenged by Will Depue ([0hq](https://github.com/0hq)).
 
-Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https://github.com/0hq/starter_chess_engine).
+Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https://github.com/0hq/starter_chess_engine) for Javascript.
+
+Check out his [Engine in Golang](https://github.com/0hq/antikythera/tree/main).
 
 ---
 
