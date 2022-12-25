@@ -12,16 +12,19 @@ A Chess Engine Built in Golang
  - [x] Quiescence Search
  - [x] Iterative Deepening
  - [ ] Transposition/Hash Tables
- 
-### Additional Optimizations
+
+### Adavnced Requirements
 
  - [ ] MTD(f)
  - [ ] Lazy SMP (Parrallelize Engine using Golang)
+
+### Additional Optimizations
+
  - [ ] Openings
  - [ ] Tablebases
- - [ ] Monte-Carlo Tree Search
  - [ ] Endgames
  - [ ] Razoring
+ - [ ] Monte-Carlo Tree Search
 
 ---
 
