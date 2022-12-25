@@ -20,11 +20,14 @@ type EngineClass struct {
 }
 
 type EngineUpgrades struct {
+	concurrent          bool
 	move_ordering       bool
 	alphabeta           bool
-	iterative_deepening bool
 	q_search            bool
-	concurrent          bool
+	iterative_deepening bool
+	transposition_table bool
+	mtd_f               bool
+	lazy_smp            bool
 }
 
 func (engine *EngineClass) getName() string {

@@ -20,6 +20,34 @@ var PVM map[chess.PieceType]int = map[chess.PieceType]int{
 	chess.Pawn:   pawn,
 }
 
+// Checks for Checkmate, Stalemate, and Total Piece Delta
+func eval_v1(position *chess.Position) int {
+	// faster than doing two comparisons
+	if position.Status() != chess.NoMethod {
+		if position.Status() == chess.Stalemate {
+			return 0
+		}
+		if position.Status() == chess.Checkmate {
+			if position.Turn() == chess.White {
+				return -CHECKMATE_VALUE
+			} else {
+				return CHECKMATE_VALUE
+			}
+		}
+	}
+
+	squares := position.Board().SquareMap()
+	var delta int = 0
+	for _, piece := range squares {
+		if piece.Color() == chess.Black {
+			delta -= PVM[piece.Type()]
+		} else {
+			delta += PVM[piece.Type()]
+		}
+	}
+	return delta
+}
+
 var FLIP = []int{
 	56, 57, 58, 59, 60, 61, 62, 63,
 	48, 49, 50, 51, 52, 53, 54, 55,

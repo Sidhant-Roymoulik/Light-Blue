@@ -8,7 +8,7 @@ const DEBUG bool = true
 const CHESS_START_POSITION string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 // Parameters
-const TIME_LIMIT time.Duration = 2000000000 // Time in nanosec, set to 0 for no time limit
+const TIME_LIMIT time.Duration = 5000000000 // Time in nanosec, set to 0 for no time limit
 const MAX_CONST_DEPTH int = 2
 const CHECKMATE_VALUE int = 1000000
 

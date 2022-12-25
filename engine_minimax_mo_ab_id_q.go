@@ -22,7 +22,6 @@ func new_engine_minimax_mo_ab_id_q() e_minimax_mo_ab_id_q {
 				alphabeta:           true,
 				iterative_deepening: true,
 				q_search:            true,
-				concurrent:          false,
 			},
 		},
 	}
@@ -35,17 +34,19 @@ func (engine *e_minimax_mo_ab_id_q) run(position *chess.Position) (best_eval int
 
 	for {
 		engine.max_ply = engine.max_ply + 1
+		new_eval, new_move := engine.minimax_start(position, 0, position.Turn() == chess.White)
 		if time.Since(engine.start) > engine.time_limit {
 			break
 		} else {
-			best_eval, best_move = engine.minimax_start(position, 0, position.Turn() == chess.White)
+			best_eval, best_move = new_eval, new_move
 		}
 
 		if best_eval >= 100000 {
+			engine.max_ply = engine.max_ply + 1
 			break
 		}
 	}
-	print("Depth:", engine.max_ply)
+	print("Depth:", engine.max_ply-1)
 	engine.max_ply = 0
 
 	return
@@ -77,7 +78,7 @@ func (engine *e_minimax_mo_ab_id_q) minimax(position *chess.Position, ply int, t
 		return engine.q_search(position, ply, turn, alpha, beta)
 	}
 	if time.Since(engine.start) > engine.time_limit {
-		return eval_v4(position, ply) * getMultiplier(turn)
+		return 0
 	}
 	if len(position.ValidMoves()) == 0 {
 		return eval_v4(position, ply) * getMultiplier(turn)

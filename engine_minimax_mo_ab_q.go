@@ -15,11 +15,9 @@ func new_engine_minimax_mo_ab_q() e_minimax_mo_ab_q {
 		EngineClass{
 			name: "Minimax with Move Ordering, Alpha-Beta Pruning, and Quiesence Search",
 			upgrades: EngineUpgrades{
-				move_ordering:       true,
-				alphabeta:           true,
-				iterative_deepening: false,
-				q_search:            true,
-				concurrent:          false,
+				move_ordering: true,
+				alphabeta:     true,
+				q_search:      true,
 			},
 		},
 	}
@@ -48,11 +46,11 @@ func (engine *e_minimax_mo_ab_q) minimax_start(position *chess.Position, ply int
 func (engine *e_minimax_mo_ab_q) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	states++
 
-	if len(position.ValidMoves()) == 0 {
-		return eval_v4(position, ply) * getMultiplier(turn)
-	}
 	if ply > MAX_CONST_DEPTH {
 		return engine.q_search(position, ply, turn, alpha, beta)
+	}
+	if len(position.ValidMoves()) == 0 {
+		return eval_v4(position, ply) * getMultiplier(turn)
 	}
 
 	moves := move_ordering_v2(position)

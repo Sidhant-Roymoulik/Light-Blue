@@ -13,14 +13,8 @@ type e_random struct {
 func new_engine_random() e_random {
 	return e_random{
 		EngineClass{
-			name: "Random",
-			upgrades: EngineUpgrades{
-				move_ordering:       false,
-				alphabeta:           false,
-				iterative_deepening: false,
-				q_search:            false,
-				concurrent:          false,
-			},
+			name:     "Random",
+			upgrades: EngineUpgrades{},
 		},
 	}
 }

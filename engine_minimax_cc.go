@@ -15,11 +15,7 @@ func new_engine_minimax_cc() e_minimax_cc {
 		EngineClass{
 			name: "Minimax with Concurrency",
 			upgrades: EngineUpgrades{
-				move_ordering:       false,
-				alphabeta:           false,
-				iterative_deepening: false,
-				q_search:            false,
-				concurrent:          true,
+				concurrent: true,
 			},
 		},
 	}

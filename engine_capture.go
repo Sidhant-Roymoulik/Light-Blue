@@ -11,14 +11,8 @@ type e_capture struct {
 func new_engine_capture() e_capture {
 	return e_capture{
 		EngineClass{
-			name: "Capture",
-			upgrades: EngineUpgrades{
-				move_ordering:       false,
-				alphabeta:           false,
-				iterative_deepening: false,
-				q_search:            false,
-				concurrent:          false,
-			},
+			name:     "Capture",
+			upgrades: EngineUpgrades{},
 		},
 	}
 }

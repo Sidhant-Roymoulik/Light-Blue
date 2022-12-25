@@ -15,11 +15,7 @@ func new_engine_minimax_ab() e_minimax_ab {
 		EngineClass{
 			name: "Minimax with Alpha-Beta Pruning",
 			upgrades: EngineUpgrades{
-				move_ordering:       false,
-				alphabeta:           true,
-				iterative_deepening: false,
-				q_search:            false,
-				concurrent:          false,
+				alphabeta: true,
 			},
 		},
 	}

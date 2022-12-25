@@ -13,14 +13,8 @@ type e_minimax struct {
 func new_engine_minimax() e_minimax {
 	return e_minimax{
 		EngineClass{
-			name: "Minimax",
-			upgrades: EngineUpgrades{
-				move_ordering:       false,
-				alphabeta:           false,
-				iterative_deepening: false,
-				q_search:            false,
-				concurrent:          false,
-			},
+			name:     "Minimax",
+			upgrades: EngineUpgrades{},
 		},
 	}
 }

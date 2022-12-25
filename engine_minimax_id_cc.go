@@ -15,13 +15,10 @@ func new_engine_minimax_id_cc() e_minimax_id_cc {
 	return e_minimax_id_cc{
 		EngineClass{
 			name:       "Minimax with Iterative Deepening and Concurrency",
-			max_ply:    2,
+			max_ply:    0,
 			time_limit: TIME_LIMIT,
 			upgrades: EngineUpgrades{
-				move_ordering:       false,
-				alphabeta:           false,
 				iterative_deepening: true,
-				q_search:            false,
 				concurrent:          true,
 			},
 		},
@@ -34,19 +31,19 @@ func (engine *e_minimax_id_cc) run(position *chess.Position) (best_eval int, bes
 	engine.start = time.Now()
 
 	for {
-		if time.Since(engine.start) < engine.time_limit {
-			best_eval, best_move = engine.minimax_start(position, 0, position.Turn() == chess.White)
-		} else {
+		engine.max_ply = engine.max_ply + 1
+		if time.Since(engine.start) > engine.time_limit {
 			break
+		} else {
+			best_eval, best_move = engine.minimax_start(position, 0, position.Turn() == chess.White)
 		}
 
 		if best_eval >= 100000 {
 			break
 		}
-		engine.max_ply = engine.max_ply + 1
 	}
 	print("Depth:", engine.max_ply-1)
-	engine.max_ply = 2
+	engine.max_ply = 0
 
 	return
 }
