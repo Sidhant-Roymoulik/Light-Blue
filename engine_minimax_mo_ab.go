@@ -31,12 +31,13 @@ func (engine *e_minimax_mo_ab) run(position *chess.Position) (best_eval int, bes
 	return
 }
 func (engine *e_minimax_mo_ab) minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
-	moves := move_ordering_v1(position)
+	moves := position.ValidMoves()
 
 	best_eval = math.MaxInt * -1
+	best_move = moves[0]
 	for _, move := range moves {
 		new_eval := engine.minimax(position.Update(move), ply+1, !turn, math.MaxInt*-1, math.MaxInt) * -1
-
+		// print("Top Level Move:", move, "Eval:", new_eval)
 		if new_eval > best_eval {
 			best_eval = new_eval
 			best_move = move
@@ -47,11 +48,11 @@ func (engine *e_minimax_mo_ab) minimax_start(position *chess.Position, ply int, 
 func (engine *e_minimax_mo_ab) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	states++
 
-	if ply > MAX_CONST_DEPTH {
-		return eval_v3(position) * getMultiplier(turn)
+	if ply > MAX_CONST_DEPTH || len(position.ValidMoves()) == 0 {
+		return eval_v3(position, ply) * getMultiplier(turn)
 	}
 
-	moves := move_ordering_v1(position)
+	moves := move_ordering_v2(position)
 
 	best_eval = math.MaxInt * -1
 	for _, move := range moves {

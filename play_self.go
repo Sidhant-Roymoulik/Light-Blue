@@ -8,8 +8,8 @@ import (
 
 func play_self(white Engine, black Engine, game *chess.Game) {
 	print("Starting Engine vs Engine Game", "\n")
-	print("Player One: " + white.getName())
-	print("Player Two: " + black.getName())
+	print("WHite Player: " + white.getName())
+	print("Black Player: " + black.getName())
 	print("")
 	print(game.FEN())
 	print(game.Position().Board().Draw())
@@ -33,12 +33,13 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 			panic(err)
 		}
 
-		print("Move:", move.String())
+		print("Best Move:", move.String())
 		print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 		print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
 		print("Positions Checked:", states)
 		print("Q-Positions Checked:", q_states)
-		print(game.FEN())
+		print("Hashes Used:", hashes)
+		// print(game.FEN())
 		print(game.Position().Board().Draw())
 	}
 	print(game.Outcome())

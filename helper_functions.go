@@ -48,7 +48,7 @@ func isQMove(move *chess.Move) bool {
 }
 
 func getQMoves(position *chess.Position) []*chess.Move {
-	moves := move_ordering_v1(position)
+	moves := move_ordering_v2(position)
 	n := 0
 	for _, move := range moves {
 		if isQMove(move) {

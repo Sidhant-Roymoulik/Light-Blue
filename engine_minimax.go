@@ -27,14 +27,18 @@ func new_engine_minimax() e_minimax {
 
 func (engine *e_minimax) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
-	best_eval, best_move = minimax_start(position, 0, position.Turn() == chess.White)
+	best_eval, best_move = engine.minimax_start(position, 0, position.Turn() == chess.White)
 	return
 }
-func minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
-	best_eval = math.MaxInt * -1
+func (engine *e_minimax) minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
 	moves := position.ValidMoves()
+
+	best_eval = math.MaxInt * -1
 	for _, move := range moves {
-		new_eval := minimax(position.Update(move), ply+1, !turn) * -1
+		new_eval := engine.minimax(position.Update(move), ply+1, !turn) * -1
+
+		// print("Top Level Move:", move, "Eval:", new_eval)
+
 		if new_eval > best_eval {
 			best_eval = new_eval
 			best_move = move
@@ -42,15 +46,19 @@ func minimax_start(position *chess.Position, ply int, turn bool) (best_eval int,
 	}
 	return best_eval, best_move
 }
-func minimax(position *chess.Position, ply int, turn bool) (best_eval int) {
-	if ply > MAX_CONST_DEPTH {
-		return eval_v1(position) * getMultiplier(turn)
-	}
+func (engine *e_minimax) minimax(position *chess.Position, ply int, turn bool) (best_eval int) {
 	states++
-	best_eval = math.MaxInt * -1
+
+	if ply > MAX_CONST_DEPTH {
+		return eval_v2(position) * getMultiplier(turn)
+	}
+
 	moves := position.ValidMoves()
+
+	best_eval = math.MaxInt * -1
 	for _, move := range moves {
-		new_eval := minimax(position.Update(move), ply+1, !turn) * -1
+		new_eval := engine.minimax(position.Update(move), ply+1, !turn) * -1
+
 		if new_eval > best_eval {
 			best_eval = new_eval
 		}

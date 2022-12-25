@@ -20,54 +20,6 @@ var PVM map[chess.PieceType]int = map[chess.PieceType]int{
 	chess.Pawn:   pawn,
 }
 
-func eval_move_v1(move *chess.Move, board *chess.Board) int {
-	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
-		return CHECKMATE_VALUE
-	}
-
-	delta := 0
-
-	if move.HasTag(chess.MoveTag(chess.Capture)) {
-		delta += PVM[chess.PieceType(board.Piece(move.S2()))]
-	}
-	if move.HasTag(chess.MoveTag(chess.Check)) {
-		delta += 25
-	}
-	if move.HasTag(chess.MoveTag(chess.KingSideCastle)) {
-		delta += 50
-	}
-	if move.HasTag(chess.MoveTag(chess.QueenSideCastle)) {
-		delta += 40
-	}
-
-	return delta
-}
-
-// Sums value of pieces and checks for game-over states
-
-func eval_v1(position *chess.Position) int {
-	// faster than doing two comparisons
-	if position.Status() != chess.NoMethod {
-		if position.Status() == chess.Stalemate {
-			return 0
-		}
-		if position.Status() == chess.Checkmate {
-			if position.Turn() == chess.White {
-				return -CHECKMATE_VALUE
-			} else {
-				return CHECKMATE_VALUE
-			}
-		}
-	}
-
-	squares := position.Board().SquareMap()
-	var delta int = 0
-	for _, piece := range squares {
-		delta += PVM[piece.Type()] * getMultiplier(piece.Color() == chess.White)
-	}
-	return delta
-}
-
 var FLIP = []int{
 	56, 57, 58, 59, 60, 61, 62, 63,
 	48, 49, 50, 51, 52, 53, 54, 55,
@@ -81,64 +33,64 @@ var FLIP = []int{
 
 var PST_MG = map[chess.PieceType][]int{
 	chess.Pawn: {
-		100, 100, 100, 100, 105, 100, 100, 100,
-		78, 83, 86, 73, 102, 82, 85, 90,
-		7, 29, 21, 44, 40, 31, 44, 7,
-		-17, 16, -2, 15, 14, 0, 15, -13,
-		-26, 3, 10, 9, 6, 1, 0, -23,
-		-22, 9, 5, -11, -10, -2, 3, -19,
-		-31, 8, -7, -37, -36, -14, 3, -31,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		60, 60, 60, 60, 70, 60, 60, 60,
+		40, 40, 40, 50, 60, 40, 40, 40,
+		20, 20, 20, 40, 50, 20, 20, 20,
+		5, 5, 15, 30, 40, 10, 5, 5,
+		5, 5, 10, 20, 30, 5, 5, 5,
+		5, 5, 5, -30, -30, 5, 5, 5,
 		0, 0, 0, 0, 0, 0, 0, 0,
 	},
 	chess.Knight: {
-		-66, -53, -75, -75, -10, -55, -58, -70,
-		-3, -6, 100, -36, 4, 62, -4, -14,
-		10, 67, 1, 74, 73, 27, 62, -2,
-		24, 24, 45, 37, 33, 41, 25, 17,
-		-1, 5, 31, 21, 22, 35, 2, 0,
-		-18, 10, 13, 22, 18, 15, 11, -14,
-		-23, -15, 2, 0, 2, 0, -23, -20,
-		-74, -23, -26, -24, -19, -35, -22, -69,
+		-20, -10, -10, -10, -10, -10, -10, -20,
+		-10, -5, -5, -5, -5, -5, -5, -10,
+		-10, -5, 15, 15, 15, 15, -5, -10,
+		-10, -5, 15, 15, 15, 15, -5, -10,
+		-10, -5, 15, 15, 15, 15, -5, -10,
+		-10, -5, 10, 15, 15, 15, -5, -10,
+		-10, -5, -5, -5, -5, -5, -5, -10,
+		-20, 0, -10, -10, -10, -10, 0, -20,
 	},
 	chess.Bishop: {
-		-59, -78, -82, -76, -23, -107, -37, -50,
-		-11, 20, 35, -42, -39, 31, 2, -22,
-		-9, 39, -32, 41, 52, -10, 28, -14,
-		25, 17, 20, 34, 26, 25, 15, 10,
-		13, 10, 17, 23, 17, 16, 0, 7,
-		14, 25, 24, 15, 8, 25, 20, 15,
-		19, 20, 11, 6, 7, 6, 20, 16,
-		-7, 2, -15, -12, -14, -15, -10, -10,
+		-20, 0, 0, 0, 0, 0, 0, -20,
+		-15, 0, 0, 0, 0, 0, 0, -15,
+		-10, 0, 0, 5, 5, 0, 0, -10,
+		-10, 10, 10, 30, 30, 10, 10, -10,
+		5, 5, 10, 25, 25, 10, 5, 5,
+		5, 5, 5, 10, 10, 5, 5, 5,
+		-10, 5, 5, 10, 10, 5, 5, -10,
+		-20, -10, -10, -10, -10, -10, -10, -20,
 	},
 	chess.Rook: {
-		35, 29, 33, 4, 37, 33, 56, 50,
-		55, 29, 56, 67, 55, 62, 34, 60,
-		19, 35, 28, 33, 45, 27, 25, 15,
-		0, 5, 16, 13, 18, -4, -9, -6,
-		-28, -35, -16, -21, -13, -29, -46, -30,
-		-42, -28, -42, -25, -25, -35, -26, -46,
-		-53, -38, -31, -26, -29, -43, -44, -53,
-		-30, -24, -18, 5, -2, -18, -31, -32,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		15, 15, 15, 20, 20, 15, 15, 15,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 10, 10, 10, 0, 0,
 	},
 	chess.Queen: {
-		6, 1, -8, -104, 69, 24, 88, 26,
-		14, 32, 60, -10, 20, 76, 57, 24,
-		-2, 43, 32, 60, 72, 63, 43, 2,
-		1, -16, 22, 17, 25, 20, -13, -6,
-		-14, -15, -2, -5, -1, -10, -20, -22,
-		-30, -6, -13, -11, -16, -11, -16, -27,
-		-36, -18, 0, -19, -15, -15, -21, -38,
-		-39, -30, -31, -13, -31, -36, -34, -42,
+		-30, -20, -10, -10, -10, -10, -20, -30,
+		-20, -10, -5, -5, -5, -5, -10, -20,
+		-10, -5, 10, 10, 10, 10, -5, -10,
+		-10, -5, 10, 20, 20, 10, -5, -10,
+		-10, -5, 10, 20, 20, 10, -5, -10,
+		-10, -5, -5, -5, -5, -5, -5, -10,
+		-20, -10, -5, -5, -5, -5, -10, -20,
+		-30, -20, -10, -10, -10, -10, -20, -30,
 	},
 	chess.King: {
-		4, 54, 47, -99, -99, 60, 83, -62,
-		-32, 10, 55, 56, 56, 55, 10, 3,
-		-62, 12, -57, 44, -67, 28, 37, -31,
-		-55, 50, 11, -4, -19, 13, 0, -49,
-		-55, -43, -52, -28, -51, -47, -8, -50,
-		-47, -42, -43, -79, -64, -32, -29, -32,
-		-4, 3, -14, -50, -57, -18, 13, 4,
-		17, 30, -3, -14, 6, -1, 40, 18,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 20, 20, 0, 0, 0,
+		0, 0, 0, 20, 20, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, -10, -10, 0, 0, 0,
+		0, 0, 20, -10, -10, 0, 20, 0,
 	},
 }
 
@@ -161,19 +113,19 @@ func eval_v2(position *chess.Position) int {
 	squares := position.Board().SquareMap()
 	var delta int = 0
 	for square, piece := range squares {
-		if piece.Color() == chess.White {
-			delta += PVM[piece.Type()]
-			delta += PST_MG[piece.Type()][square]
-		} else {
+		if piece.Color() == chess.Black {
 			delta -= PVM[piece.Type()]
-			delta -= PST_MG[piece.Type()][FLIP[square]]
+			delta -= PST_MG[piece.Type()][square]
+		} else {
+			delta += PVM[piece.Type()]
+			delta += PST_MG[piece.Type()][FLIP[square]]
 		}
 	}
 	return delta
 }
 
-// Give Mobility Bonus
-func eval_v3(position *chess.Position) int {
+// Checkmate ply penalty
+func eval_v3(position *chess.Position, ply int) int {
 	// faster than doing two comparisons
 	if position.Status() != chess.NoMethod {
 		if position.Status() == chess.Stalemate {
@@ -181,9 +133,9 @@ func eval_v3(position *chess.Position) int {
 		}
 		if position.Status() == chess.Checkmate {
 			if position.Turn() == chess.White {
-				return -CHECKMATE_VALUE
+				return -CHECKMATE_VALUE + ply
 			} else {
-				return CHECKMATE_VALUE
+				return CHECKMATE_VALUE - ply
 			}
 		}
 	}
@@ -193,19 +145,48 @@ func eval_v3(position *chess.Position) int {
 	for square, piece := range squares {
 		if piece.Color() == chess.White {
 			delta += PVM[piece.Type()]
-			delta += PST_MG[piece.Type()][square]
+			delta += PST_MG[piece.Type()][FLIP[square]]
 		} else {
 			delta -= PVM[piece.Type()]
-			delta -= PST_MG[piece.Type()][FLIP[square]]
+			delta -= PST_MG[piece.Type()][square]
+		}
+	}
+
+	return delta
+}
+
+// Includes Piece Mobility
+func eval_v4(position *chess.Position, ply int) int {
+	// faster than doing two comparisons
+	if position.Status() != chess.NoMethod {
+		if position.Status() == chess.Checkmate {
+			if position.Turn() == chess.White {
+				return -CHECKMATE_VALUE + ply
+			} else {
+				return CHECKMATE_VALUE - ply
+			}
+		}
+		return 0
+	}
+
+	squares := position.Board().SquareMap()
+	var delta int = 0
+	for square, piece := range squares {
+		if piece.Color() == chess.White {
+			delta += PVM[piece.Type()]
+			delta += PST_MG[piece.Type()][FLIP[square]]
+		} else {
+			delta -= PVM[piece.Type()]
+			delta -= PST_MG[piece.Type()][square]
 		}
 	}
 
 	if position.Turn() == chess.White {
 		delta += len(position.ValidMoves())
-		// delta -= len(position.NullMove().ValidMoves())
+		delta -= len(position.NullMove().ValidMoves())
 	} else {
+		delta += len(position.NullMove().ValidMoves())
 		delta -= len(position.ValidMoves())
-		// delta += len(position.NullMove().ValidMoves())
 	}
 
 	return delta

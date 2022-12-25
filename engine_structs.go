@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
@@ -10,8 +12,11 @@ type Engine interface {
 }
 
 type EngineClass struct {
-	name     string
-	upgrades EngineUpgrades
+	name       string
+	max_ply    int
+	start      time.Time
+	time_limit time.Duration
+	upgrades   EngineUpgrades
 }
 
 type EngineUpgrades struct {
