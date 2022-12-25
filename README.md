@@ -13,7 +13,7 @@ A Chess Engine Built in Golang
  - [x] Iterative Deepening
  - [ ] Transposition/Hash Tables
 
-### Adavnced Requirements
+### Advanced Requirements
 
  - [ ] MTD(f)
  - [ ] Lazy SMP (Parrallelize Engine using Golang)
