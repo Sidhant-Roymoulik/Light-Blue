@@ -7,12 +7,12 @@ import (
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
-type e_minimax_mo_ab_id_q struct {
+type e_minimax_mo_ab_q_id struct {
 	EngineClass
 }
 
-func new_engine_minimax_mo_ab_id_q() e_minimax_mo_ab_id_q {
-	return e_minimax_mo_ab_id_q{
+func new_engine_minimax_mo_ab_q_id() e_minimax_mo_ab_q_id {
+	return e_minimax_mo_ab_q_id{
 		EngineClass{
 			name:       "Minimax with Move Ordering, Alpha-Beta Pruning, Iterative Deepening, and Quiesence Search",
 			max_ply:    0,
@@ -27,9 +27,18 @@ func new_engine_minimax_mo_ab_id_q() e_minimax_mo_ab_id_q {
 	}
 }
 
-func (engine *e_minimax_mo_ab_id_q) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *e_minimax_mo_ab_q_id) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
 
+	best_eval, best_move = engine.iterative_deepening(position)
+
+	print("Depth:", engine.max_ply-1)
+	engine.max_ply = 0
+
+	return
+}
+
+func (engine *e_minimax_mo_ab_q_id) iterative_deepening(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	engine.start = time.Now()
 
 	for {
@@ -46,13 +55,11 @@ func (engine *e_minimax_mo_ab_id_q) run(position *chess.Position) (best_eval int
 			break
 		}
 	}
-	print("Depth:", engine.max_ply-1)
-	engine.max_ply = 0
 
 	return
 }
 
-func (engine *e_minimax_mo_ab_id_q) minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
+func (engine *e_minimax_mo_ab_q_id) minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
 	moves := move_ordering_v2(position)
 
 	best_eval = math.MaxInt * -1
@@ -71,7 +78,7 @@ func (engine *e_minimax_mo_ab_id_q) minimax_start(position *chess.Position, ply 
 	}
 	return best_eval, best_move
 }
-func (engine *e_minimax_mo_ab_id_q) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
+func (engine *e_minimax_mo_ab_q_id) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	states++
 
 	if ply > engine.max_ply {
@@ -99,7 +106,7 @@ func (engine *e_minimax_mo_ab_id_q) minimax(position *chess.Position, ply int, t
 	return alpha
 }
 
-func (engine *e_minimax_mo_ab_id_q) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
+func (engine *e_minimax_mo_ab_q_id) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	q_states++
 
 	start_eval := eval_v4(position, ply) * getMultiplier(turn)

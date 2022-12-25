@@ -1,6 +1,8 @@
 package main
 
-import "github.com/Sidhant-Roymoulik/chess"
+import (
+	"github.com/Sidhant-Roymoulik/chess"
+)
 
 // piece weights
 const pawn int = 100
@@ -91,14 +93,14 @@ var PST_MG = map[chess.PieceType][]int{
 		-20, -10, -10, -10, -10, -10, -10, -20,
 	},
 	chess.Rook: {
-		0, 0, 0, 0, 0, 0, 0, 0,
-		15, 15, 15, 20, 20, 15, 15, 15,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 10, 10, 10, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		25, 25, 25, 25, 25, 25, 25, 25,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
 	},
 	chess.Queen: {
 		-30, -20, -10, -10, -10, -10, -20, -30,
@@ -111,12 +113,12 @@ var PST_MG = map[chess.PieceType][]int{
 		-30, -20, -10, -10, -10, -10, -20, -30,
 	},
 	chess.King: {
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 20, 20, 0, 0, 0,
-		0, 0, 0, 20, 20, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
+		-70, -70, -70, -70, -70, -70, -70, -70,
+		-70, -70, -70, -70, -70, -70, -70, -70,
+		-70, -70, -70, -70, -70, -70, -70, -70,
+		-70, -70, -70, -70, -70, -70, -70, -70,
+		-70, -70, -70, -70, -70, -70, -70, -70,
+		-70, -70, -70, -70, -70, -70, -70, -70,
 		0, 0, 0, -10, -10, 0, 0, 0,
 		0, 0, 20, -10, -10, 0, 20, 0,
 	},
@@ -208,6 +210,125 @@ func eval_v4(position *chess.Position, ply int) int {
 			delta -= PST_MG[piece.Type()][square]
 		}
 	}
+
+	if position.Turn() == chess.White {
+		delta += len(position.ValidMoves())
+		delta -= len(position.NullMove().ValidMoves())
+	} else {
+		delta += len(position.NullMove().ValidMoves())
+		delta -= len(position.ValidMoves())
+	}
+
+	return delta
+}
+
+var PST_EG = map[chess.PieceType][]int{
+	chess.Pawn: {
+		0, 0, 0, 0, 0, 0, 0, 0,
+		60, 60, 60, 60, 70, 60, 60, 60,
+		40, 40, 40, 50, 60, 40, 40, 40,
+		20, 20, 20, 40, 50, 20, 20, 20,
+		5, 5, 15, 30, 40, 10, 5, 5,
+		5, 5, 10, 20, 30, 5, 5, 5,
+		5, 5, 5, -30, -30, 5, 5, 5,
+		0, 0, 0, 0, 0, 0, 0, 0,
+	},
+	chess.Knight: {
+		-20, -10, -10, -10, -10, -10, -10, -20,
+		-10, -5, -5, -5, -5, -5, -5, -10,
+		-10, -5, 15, 15, 15, 15, -5, -10,
+		-10, -5, 15, 15, 15, 15, -5, -10,
+		-10, -5, 15, 15, 15, 15, -5, -10,
+		-10, -5, 10, 15, 15, 15, -5, -10,
+		-10, -5, -5, -5, -5, -5, -5, -10,
+		-20, 0, -10, -10, -10, -10, 0, -20,
+	},
+	chess.Bishop: {
+		-20, 0, 0, 0, 0, 0, 0, -20,
+		-15, 0, 0, 0, 0, 0, 0, -15,
+		-10, 0, 0, 5, 5, 0, 0, -10,
+		-10, 10, 10, 30, 30, 10, 10, -10,
+		5, 5, 10, 25, 25, 10, 5, 5,
+		5, 5, 5, 10, 10, 5, 5, 5,
+		-10, 5, 5, 10, 10, 5, 5, -10,
+		-20, -10, -10, -10, -10, -10, -10, -20,
+	},
+	chess.Rook: {
+		0, 0, 5, 10, 10, 5, 0, 0,
+		25, 25, 25, 25, 25, 25, 25, 25,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+		0, 0, 5, 10, 10, 5, 0, 0,
+	},
+	chess.Queen: {
+		-30, -20, -10, -10, -10, -10, -20, -30,
+		-20, -10, -5, -5, -5, -5, -10, -20,
+		-10, -5, 10, 10, 10, 10, -5, -10,
+		-10, -5, 10, 20, 20, 10, -5, -10,
+		-10, -5, 10, 20, 20, 10, -5, -10,
+		-10, -5, -5, -5, -5, -5, -5, -10,
+		-20, -10, -5, -5, -5, -5, -10, -20,
+		-30, -20, -10, -10, -10, -10, -20, -30,
+	},
+	chess.King: {
+		-50, -10, 0, 0, 0, 0, -10, -50,
+		-10, 0, 10, 10, 10, 10, 0, -10,
+		0, 10, 15, 15, 15, 15, 10, 0,
+		0, 10, 15, 20, 20, 15, 10, 0,
+		0, 10, 15, 20, 20, 15, 10, 0,
+		0, 10, 15, 15, 15, 15, 10, 0,
+		-10, 0, 10, 10, 10, 10, 0, -10,
+		-50, -10, 0, 0, 0, 0, -10, -50,
+	},
+}
+
+// Endgame
+func eval_v5(position *chess.Position, ply int) int {
+	// faster than doing two comparisons
+	if position.Status() != chess.NoMethod {
+		if position.Status() == chess.Checkmate {
+			if position.Turn() == chess.White {
+				return -CHECKMATE_VALUE + ply
+			} else {
+				return CHECKMATE_VALUE - ply
+			}
+		}
+		return 0
+	}
+
+	var POCC map[chess.PieceType]int = map[chess.PieceType]int{
+		chess.King:   0,
+		chess.Queen:  0,
+		chess.Rook:   0,
+		chess.Bishop: 0,
+		chess.Knight: 0,
+		chess.Pawn:   0,
+	}
+
+	squares := position.Board().SquareMap()
+	var delta_mg int = 0
+	var delta_eg int = 0
+	for square, piece := range squares {
+		POCC[piece.Type()] += 1
+		if piece.Color() == chess.White {
+			delta_mg += PVM[piece.Type()]
+			delta_mg += PST_MG[piece.Type()][FLIP[square]]
+			delta_eg += PVM[piece.Type()]
+			delta_eg += PST_MG[piece.Type()][FLIP[square]]
+		} else {
+			delta_mg -= PVM[piece.Type()]
+			delta_mg -= PST_MG[piece.Type()][square]
+			delta_eg -= PVM[piece.Type()]
+			delta_eg -= PST_MG[piece.Type()][square]
+		}
+	}
+
+	var phase int = POCC[chess.Queen]*10 + POCC[chess.Rook]*5 + POCC[chess.Bishop]*3 + POCC[chess.Knight]*3
+	phase = min(64, phase)
+	var delta int = (delta_mg / (phase + 1)) + (delta_eg / (64 - phase + 1))
 
 	if position.Turn() == chess.White {
 		delta += len(position.ValidMoves())

@@ -28,25 +28,35 @@ func new_engine_minimax_id_cc() e_minimax_id_cc {
 func (engine *e_minimax_id_cc) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
 
-	engine.start = time.Now()
+	best_eval, best_move = engine.iterative_deepening(position)
 
-	for {
-		engine.max_ply = engine.max_ply + 1
-		if time.Since(engine.start) > engine.time_limit {
-			break
-		} else {
-			best_eval, best_move = engine.minimax_start(position, 0, position.Turn() == chess.White)
-		}
-
-		if best_eval >= 100000 {
-			break
-		}
-	}
 	print("Depth:", engine.max_ply-1)
 	engine.max_ply = 0
 
 	return
 }
+
+func (engine *e_minimax_id_cc) iterative_deepening(position *chess.Position) (best_eval int, best_move *chess.Move) {
+	engine.start = time.Now()
+
+	for {
+		engine.max_ply = engine.max_ply + 1
+		new_eval, new_move := engine.minimax_start(position, 0, position.Turn() == chess.White)
+		if time.Since(engine.start) > engine.time_limit {
+			break
+		} else {
+			best_eval, best_move = new_eval, new_move
+		}
+
+		if best_eval >= 100000 {
+			engine.max_ply = engine.max_ply + 1
+			break
+		}
+	}
+
+	return
+}
+
 func (engine *e_minimax_id_cc) minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
 	moves := position.ValidMoves()
 	eval_chan_local := make(chan int, len(moves))
@@ -73,15 +83,15 @@ func (engine *e_minimax_id_cc) minimax_start(position *chess.Position, ply int, 
 func (engine *e_minimax_id_cc) minimax(position *chess.Position, ply int, turn bool, prev_move *chess.Move, eval_chan chan int, move_chan chan *chess.Move) {
 	states++
 
-	if ply >= engine.max_ply || len(position.ValidMoves()) == 0 || time.Since(engine.start) >= engine.time_limit {
-		eval_chan <- eval_v3(position, ply) * getMultiplier(turn)
+	moves := position.ValidMoves()
+
+	if ply > engine.max_ply || len(moves) == 0 || time.Since(engine.start) > engine.time_limit {
+		eval_chan <- eval_v4(position, ply) * getMultiplier(turn)
 		if ply == 1 {
 			move_chan <- prev_move
 		}
-		return
 	}
 
-	moves := position.ValidMoves()
 	eval_chan_local := make(chan int, len(moves))
 
 	for _, move := range moves {
@@ -100,8 +110,3 @@ func (engine *e_minimax_id_cc) minimax(position *chess.Position, ply int, turn b
 		move_chan <- prev_move
 	}
 }
-
-// func (engine *e_minimax_id_cc) setConfig(max_ply int, time_limit time.Duration) {
-// 	engine.max_ply = max_ply
-// 	engine.time_limit = time_limit
-// }

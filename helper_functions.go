@@ -58,3 +58,10 @@ func getQMoves(position *chess.Position) []*chess.Move {
 	}
 	return moves[:n]
 }
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
