@@ -37,6 +37,31 @@ func move_ordering_v1(position *chess.Position) []*chess.Move {
 	return moves
 }
 
+func isQMove(move *chess.Move) bool {
+	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
+		return true
+	}
+	if move.HasTag(chess.MoveTag(chess.Capture)) {
+		return true
+	}
+	if move.HasTag(chess.MoveTag(chess.Check)) {
+		return true
+	}
+	return false
+}
+
+func getQMoves(position *chess.Position) []*chess.Move {
+	moves := move_ordering_v2(position)
+	n := 0
+	for _, move := range moves {
+		if isQMove(move) {
+			moves[n] = move
+			n++
+		}
+	}
+	return moves[:n]
+}
+
 // x axis is attacker: no piece, king, queen, rook, bishop, knight, pawn
 var mvv_lva = [7][7]int{
 	{0, 0, 0, 0, 0, 0, 0},       // victim no piece

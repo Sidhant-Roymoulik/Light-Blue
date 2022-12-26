@@ -16,4 +16,7 @@ const CHECKMATE_VALUE int = 1000000
 var start time.Time
 var states int = 0
 var q_states int = 0
-var hashes int = 0
+var hash_hits int = 0
+var hash_reads int = 0
+var hash_writes int = 0
+var hash_collisions int = 0

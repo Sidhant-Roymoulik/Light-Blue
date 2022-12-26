@@ -2,16 +2,21 @@ package main
 
 import (
 	"runtime"
-
-	"github.com/Sidhant-Roymoulik/chess"
 )
 
 func main() {
 	print("Running main...")
 	defer print("Finished main.")
 
-	runtime.GOMAXPROCS(runtime.NumCPU() - 1)
-	chess.UseNotation(chess.AlgebraicNotation{})
+	InitZobrist()
+
+	print("Version", runtime.Version())
+	print("NumCPU", runtime.NumCPU())
+	print("GOMAXPROCS", runtime.GOMAXPROCS(0))
+	print("Initialization complete.")
+	print()
+
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	test_play_self()
 	// test_play_human()
@@ -19,10 +24,10 @@ func main() {
 
 func test_play_self() {
 	game := game_from_fen(CHESS_START_POSITION)
-	engine_1 := new_engine_minimax_mo_ab_q_id()
-	engine_2 := new_engine_minimax_mo_ab_q_id()
-	// engine_1 := new_engine_minimax_mo_ab_q()
-	// engine_2 := new_engine_minimax_mo_ab_q()
+	// engine_1 := new_engine_minimax_mo_ab_q_id()
+	// engine_2 := new_engine_minimax_mo_ab_q_id()
+	engine_1 := new_engine_version_1_0()
+	engine_2 := new_engine_version_1_0()
 	play_self(&engine_1, &engine_2, game)
 }
 

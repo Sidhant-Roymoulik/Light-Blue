@@ -51,7 +51,7 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 			print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
 			print("Positions Checked:", states)
 			print("Q-Positions Checked:", q_states)
-			print("Hashes Used:", hashes)
+			print("Hashes:", hash_hits, hash_reads, hash_collisions)
 			// print(game.FEN())
 		}
 		print(game.Position().Board().Draw())

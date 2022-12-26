@@ -15,7 +15,8 @@ func resetCounters() {
 	start = time.Now()
 	states = 0
 	q_states = 0
-	hashes = 0
+	hash_hits = 0
+	hash_writes = 0
 }
 
 func game_from_fen(str string) *chess.Game {
@@ -34,32 +35,7 @@ func getMultiplier(turn bool) int {
 	}
 }
 
-func isQMove(move *chess.Move) bool {
-	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
-		return true
-	}
-	if move.HasTag(chess.MoveTag(chess.Capture)) {
-		return true
-	}
-	if move.HasTag(chess.MoveTag(chess.Check)) {
-		return true
-	}
-	return false
-}
-
-func getQMoves(position *chess.Position) []*chess.Move {
-	moves := move_ordering_v2(position)
-	n := 0
-	for _, move := range moves {
-		if isQMove(move) {
-			moves[n] = move
-			n++
-		}
-	}
-	return moves[:n]
-}
-
-func min(a, b int) int {
+func min(a, b float64) float64 {
 	if a < b {
 		return a
 	}

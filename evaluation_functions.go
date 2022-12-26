@@ -285,7 +285,14 @@ var PST_EG = map[chess.PieceType][]int{
 	},
 }
 
-// Endgame
+var PawnPhase int = 0
+var KnightPhase int = 1
+var BishopPhase int = 1
+var RookPhase int = 2
+var QueenPhase int = 4
+var TotalPhase int = PawnPhase*16 + KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
+
+// Tapered Evaluation
 func eval_v5(position *chess.Position, ply int) int {
 	// faster than doing two comparisons
 	if position.Status() != chess.NoMethod {
@@ -314,21 +321,23 @@ func eval_v5(position *chess.Position, ply int) int {
 	for square, piece := range squares {
 		POCC[piece.Type()] += 1
 		if piece.Color() == chess.White {
-			delta_mg += PVM[piece.Type()]
-			delta_mg += PST_MG[piece.Type()][FLIP[square]]
-			delta_eg += PVM[piece.Type()]
-			delta_eg += PST_MG[piece.Type()][FLIP[square]]
+			delta_mg += PVM[piece.Type()] + PST_MG[piece.Type()][FLIP[square]]
+			delta_eg += PVM[piece.Type()] + PST_EG[piece.Type()][FLIP[square]]
 		} else {
-			delta_mg -= PVM[piece.Type()]
-			delta_mg -= PST_MG[piece.Type()][square]
-			delta_eg -= PVM[piece.Type()]
-			delta_eg -= PST_MG[piece.Type()][square]
+			delta_mg -= PVM[piece.Type()] + PST_MG[piece.Type()][square]
+			delta_eg -= PVM[piece.Type()] + PST_EG[piece.Type()][square]
 		}
 	}
 
-	var phase int = POCC[chess.Queen]*10 + POCC[chess.Rook]*5 + POCC[chess.Bishop]*3 + POCC[chess.Knight]*3
-	phase = min(64, phase)
-	var delta int = (delta_mg / (phase + 1)) + (delta_eg / (64 - phase + 1))
+	var phase int = TotalPhase
+	phase -= POCC[chess.Pawn] * PawnPhase
+	phase -= POCC[chess.Knight] * KnightPhase
+	phase -= POCC[chess.Bishop] * BishopPhase
+	phase -= POCC[chess.Rook] * RookPhase
+	phase -= POCC[chess.Queen] * QueenPhase
+	phase = (phase*256 + (TotalPhase / 2)) / TotalPhase
+
+	var delta int = ((delta_mg * (256 - phase)) + (delta_eg * phase)) / 256
 
 	if position.Turn() == chess.White {
 		delta += len(position.ValidMoves())

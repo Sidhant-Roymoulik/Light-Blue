@@ -7,6 +7,8 @@ import (
 )
 
 func play_self(white Engine, black Engine, game *chess.Game) {
+	white.reset_TT(game.Position())
+	black.reset_TT(game.Position())
 	print("Starting Engine vs Engine Game", "\n")
 	print("WHite Player: " + white.getName())
 	print("Black Player: " + black.getName())
@@ -36,9 +38,9 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 		print("Best Move:", move.String())
 		print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 		print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-		print("Positions Checked:", states)
+		print("Unique Positions Checked:", states)
 		print("Q-Positions Checked:", q_states)
-		print("Hashes Used:", hashes)
+		print("Hashes:", hash_hits, hash_writes)
 		// print(game.FEN())
 		print(game.Position().Board().Draw())
 	}
