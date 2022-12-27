@@ -122,7 +122,7 @@ func (engine *e_minimax_mo_ab_q_id) q_search(position *chess.Position, ply int, 
 		return start_eval
 	}
 
-	moves := getQMoves(position)
+	moves := get_q_moves(position)
 
 	if len(moves) == 0 {
 		return start_eval

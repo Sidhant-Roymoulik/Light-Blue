@@ -7,6 +7,8 @@ import (
 )
 
 func play_human(engine Engine, human Engine, game *chess.Game) {
+	engine.reset_TT(game.Position())
+
 	print("Starting Human vs Engine Game", "\n")
 
 	var human_white bool = true
@@ -49,9 +51,9 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 			print("Best Move:", move)
 			print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 			print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-			print("Positions Checked:", states)
+			print("Unique Positions Checked:", states)
 			print("Q-Positions Checked:", q_states)
-			print("Hashes:", hash_hits, hash_reads, hash_collisions)
+			print("Hashes:", hash_hits, hash_writes)
 			// print(game.FEN())
 		}
 		print(game.Position().Board().Draw())
