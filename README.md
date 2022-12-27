@@ -11,10 +11,11 @@ A Chess Engine Built in Golang
  - [x] Alpha-Beta Pruning
  - [x] Quiescence Search
  - [x] Iterative Deepening
- - [ ] Transposition/Hash Tables
+ - [x] Transposition/Hash Tables
 
 ### Advanced Requirements
 
+ - [x] Move Picking
  - [ ] MTD(f)
  - [ ] Lazy SMP (Parrallelize Engine using Golang)
 
