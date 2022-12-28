@@ -38,21 +38,21 @@ func move_ordering_v1(position *chess.Position) []*chess.Move {
 }
 
 func is_q_move(move *chess.Move) bool {
-	if move.HasTag(chess.Check) {
-		return true
-	}
 	if move.HasTag(chess.Capture) {
 		return true
 	}
 	if move.HasTag(chess.EnPassant) {
 		return true
 	}
-	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
-		return true
-	}
-	if move.Promo() != chess.NoPieceType {
-		return true
-	}
+	// if move.HasTag(chess.MoveTag(chess.Checkmate)) {
+	// 	return true
+	// }
+	// if move.HasTag(chess.Check) {
+	// 	return true
+	// }
+	// if move.Promo() != chess.NoPieceType {
+	// 	return true
+	// }
 	return false
 }
 
@@ -107,10 +107,25 @@ func MVV_LVA(move *chess.Move, board *chess.Board) int {
 	return mvv_lva[board.Piece(move.S2()).Type()][board.Piece(move.S1()).Type()]
 }
 
-func get_move(position *chess.Position, moves []*chess.Move, start int) *chess.Move {
+func get_move_v1(position *chess.Position, moves []*chess.Move, start int) *chess.Move {
+	best_eval := eval_move_v2(moves[start], position.Board())
 	for i := start + 1; i < len(moves); i++ {
-		if eval_move_v2(moves[start], position.Board()) < eval_move_v2(moves[i], position.Board()) {
+		new_eval := eval_move_v2(moves[i], position.Board())
+		if new_eval > best_eval {
 			moves[start], moves[i] = moves[i], moves[start]
+			best_eval = new_eval
+		}
+	}
+	return moves[start]
+}
+
+func get_move_v2(position *chess.Position, moves []*chess.Move, start int) *chess.Move {
+	best_eval := eval_move_v2(moves[start], position.Board())
+	for i := start + 1; i < len(moves); i++ {
+		new_eval := eval_move_v2(moves[i], position.Board())
+		if new_eval > best_eval {
+			moves[start], moves[i] = moves[i], moves[start]
+			best_eval = new_eval
 		}
 	}
 	return moves[start]

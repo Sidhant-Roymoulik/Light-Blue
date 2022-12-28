@@ -9,6 +9,7 @@ import (
 
 // Upgrades over engine_minimax_mo_ab_q_id:
 // 		Adds transposition table
+// 		Adds move picking
 
 type engine_version_1_1 struct {
 	EngineClass
@@ -88,7 +89,7 @@ func (engine *engine_version_1_1) minimax_start(position *chess.Position, ply in
 		if time.Since(engine.start) > engine.time_limit {
 			break
 		}
-		move := get_move(position, moves, i)
+		move := get_move_v1(position, moves, i)
 
 		var updated_position = position.Update(move)
 		var updated_hash = Zobrist.GenHash(updated_position)
@@ -107,8 +108,8 @@ func (engine *engine_version_1_1) minimax_start(position *chess.Position, ply in
 	}
 
 	if !engine.time_up() && best_move != nil { // this is off
-		var entry *SearchEntry = engine.tt.Store(hash, ply, engine.age)
-		entry.Set(hash, best_eval, best_move, 0, ply, ExactFlag, engine.age)
+		var entry *SearchEntry = engine.tt.Store(hash, engine.max_ply, engine.age)
+		entry.Set(hash, best_eval, best_move, 0, engine.max_ply, ExactFlag, engine.age)
 		hash_writes++
 	}
 
@@ -145,7 +146,7 @@ func (engine *engine_version_1_1) minimax(position *chess.Position, ply int, tur
 
 	moves := position.ValidMoves()
 	for i := 0; i < len(moves); i++ {
-		move := get_move(position, moves, i)
+		move := get_move_v1(position, moves, i)
 
 		var updated_position = position.Update(move)
 		var updated_hash = Zobrist.GenHash(updated_position)
@@ -173,8 +174,8 @@ func (engine *engine_version_1_1) minimax(position *chess.Position, ply int, tur
 	}
 
 	if !engine.time_up() {
-		var entry *SearchEntry = engine.tt.Store(hash, ply, engine.age)
-		entry.Set(hash, best_eval, best_move, 0, ply, tt_flag, engine.age)
+		var entry *SearchEntry = engine.tt.Store(hash, engine.max_ply, engine.age)
+		entry.Set(hash, best_eval, best_move, 0, engine.max_ply, tt_flag, engine.age)
 
 		hash_writes++
 	}
@@ -205,7 +206,7 @@ func (engine *engine_version_1_1) q_search(position *chess.Position, ply int, tu
 	}
 
 	for i := 0; i < len(moves); i++ {
-		move := get_move(position, moves, i)
+		move := get_move_v1(position, moves, i)
 
 		new_eval := engine.q_search(position.Update(move), ply+1, !turn, -beta, -alpha) * -1
 

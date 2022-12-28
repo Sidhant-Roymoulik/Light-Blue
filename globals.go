@@ -6,9 +6,10 @@ import "time"
 const DEBUG bool = true
 
 const CHESS_START_POSITION string = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+const ITALIAN_START_POSITION string = "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1"
 
 // Parameters
-const TIME_LIMIT time.Duration = 2 * 1000000000 // Time in nanosec, set to 0 for no time limit
+const TIME_LIMIT time.Duration = 5 * 1000000000 // Time in nanosec, set to 0 for no time limit
 const MAX_CONST_DEPTH int = 2
 const CHECKMATE_VALUE int = 1000000
 
