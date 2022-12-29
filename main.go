@@ -23,11 +23,9 @@ func main() {
 }
 
 func test_play_self() {
-	game := game_from_fen(ITALIAN_START_POSITION)
-	// engine_1 := new_engine_minimax_mo_ab_q_id()
-	// engine_2 := new_engine_minimax_mo_ab_q_id()
-	engine_1 := new_engine_version_1_1()
-	engine_2 := new_engine_version_1_1()
+	game := game_from_fen(CHESS_START_POSITION)
+	engine_1 := new_engine_version_1_2()
+	engine_2 := new_engine_version_1_2()
 	play_self(&engine_1, &engine_2, game)
 }
 

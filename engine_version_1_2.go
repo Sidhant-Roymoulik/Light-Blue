@@ -7,17 +7,17 @@ import (
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
-// Upgrades over Version 1.0:
-// 		Adds move picking
+// Upgrades over Version 1.1:
+// 		Faster move picking
 
-type engine_version_1_1 struct {
+type engine_version_1_2 struct {
 	EngineClass
 }
 
-func new_engine_version_1_1() engine_version_1_1 {
-	return engine_version_1_1{
+func new_engine_version_1_2() engine_version_1_2 {
+	return engine_version_1_2{
 		EngineClass{
-			name:       "Version 1.1 (MO, AB, ID, QS, DP, TT)",
+			name:       "Version 1.2 (MO, AB, ID, QS, DP, TT)",
 			max_ply:    0,
 			time_limit: TIME_LIMIT,
 			upgrades: EngineUpgrades{
@@ -37,7 +37,7 @@ func new_engine_version_1_1() engine_version_1_1 {
 
 }
 
-func (engine *engine_version_1_1) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *engine_version_1_2) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
 
 	best_eval, best_move = engine.iterative_deepening(position)
@@ -49,13 +49,13 @@ func (engine *engine_version_1_1) run(position *chess.Position) (best_eval int, 
 	return
 }
 
-func (engine *engine_version_1_1) iterative_deepening(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *engine_version_1_2) iterative_deepening(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	engine.start = time.Now()
 	engine.age ^= 1
 
 	for {
 		engine.max_ply = engine.max_ply + 1
-		new_eval, new_move := engine.minimax_start(position, 0, position.Turn() == chess.White)
+		new_eval, new_move := engine.minimax_start(position, position.Turn() == chess.White)
 		if time.Since(engine.start) > engine.time_limit {
 			break
 		} else {
@@ -70,7 +70,7 @@ func (engine *engine_version_1_1) iterative_deepening(position *chess.Position) 
 	return
 }
 
-func (engine *engine_version_1_1) minimax_start(position *chess.Position, ply int, turn bool) (best_eval int, best_move *chess.Move) {
+func (engine *engine_version_1_2) minimax_start(position *chess.Position, turn bool) (best_eval int, best_move *chess.Move) {
 	var hash uint64 = Zobrist.GenHash(position)
 	var entry *SearchEntry = engine.tt.Probe(hash)
 	var tt_eval, should_use, tt_move = entry.Get(hash, 0, engine.max_ply, -math.MaxInt, math.MaxInt)
@@ -80,22 +80,22 @@ func (engine *engine_version_1_1) minimax_start(position *chess.Position, ply in
 		return tt_eval, tt_move
 	}
 
-	moves := position.ValidMoves()
+	moves := score_moves(position.ValidMoves(), position.Board())
 
 	best_eval = math.MaxInt * -1
-	best_move = moves[0]
+	best_move = moves[0].move
 	for i := 0; i < len(moves); i++ {
 		if time.Since(engine.start) > engine.time_limit {
 			break
 		}
-		move := get_move_v1(position, moves, i)
+		move := get_move_v2(moves, i)
 
 		var updated_position = position.Update(move)
 		var updated_hash = Zobrist.GenHash(updated_position)
 
 		engine.Add_Zobrist_History(updated_hash)
 
-		new_eval := engine.minimax(position.Update(move), ply+1, !turn, math.MaxInt*-1, -best_eval) * -1
+		new_eval := engine.minimax(position.Update(move), 1, !turn, math.MaxInt*-1, -best_eval) * -1
 
 		engine.Remove_Zobrist_History()
 
@@ -114,20 +114,20 @@ func (engine *engine_version_1_1) minimax_start(position *chess.Position, ply in
 
 	return best_eval, best_move
 }
-func (engine *engine_version_1_1) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (eval int) {
+func (engine *engine_version_1_2) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (eval int) {
+	states++
+
 	if engine.time_up() {
 		return 0
 	}
 
 	var hash uint64 = Zobrist.GenHash(position)
 	var entry *SearchEntry = engine.tt.Probe(hash)
-	var tt_eval, should_use, _ = entry.Get(hash, 0, engine.max_ply, -math.MaxInt, math.MaxInt)
+	var tt_eval, should_use, _ = entry.Get(hash, 0, engine.max_ply-ply, alpha, beta)
 	if should_use {
 		hash_hits++
 		return tt_eval
 	}
-
-	states++
 
 	if ply > engine.max_ply {
 		return engine.q_search(position, ply, turn, alpha, beta)
@@ -143,9 +143,10 @@ func (engine *engine_version_1_1) minimax(position *chess.Position, ply int, tur
 	var best_move *chess.Move = nil
 	var tt_flag = AlphaFlag
 
-	moves := position.ValidMoves()
+	moves := score_moves(position.ValidMoves(), position.Board())
+
 	for i := 0; i < len(moves); i++ {
-		move := get_move_v1(position, moves, i)
+		move := get_move_v2(moves, i)
 
 		var updated_position = position.Update(move)
 		var updated_hash = Zobrist.GenHash(updated_position)
@@ -173,8 +174,8 @@ func (engine *engine_version_1_1) minimax(position *chess.Position, ply int, tur
 	}
 
 	if !engine.time_up() {
-		var entry *SearchEntry = engine.tt.Store(hash, engine.max_ply, engine.age)
-		entry.Set(hash, best_eval, best_move, 0, engine.max_ply, tt_flag, engine.age)
+		var entry *SearchEntry = engine.tt.Store(hash, engine.max_ply-ply, engine.age)
+		entry.Set(hash, best_eval, best_move, 0, engine.max_ply-ply, tt_flag, engine.age)
 
 		hash_writes++
 	}
@@ -182,7 +183,7 @@ func (engine *engine_version_1_1) minimax(position *chess.Position, ply int, tur
 	return best_eval
 }
 
-func (engine *engine_version_1_1) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
+func (engine *engine_version_1_2) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int) (best_eval int) {
 	q_states++
 
 	start_eval := eval_v5(position, ply) * getMultiplier(turn)
@@ -198,14 +199,14 @@ func (engine *engine_version_1_1) q_search(position *chess.Position, ply int, tu
 		return start_eval
 	}
 
-	moves := get_q_moves(position)
+	moves := score_moves(get_q_moves(position), position.Board())
 
 	if len(moves) == 0 {
 		return start_eval
 	}
 
 	for i := 0; i < len(moves); i++ {
-		move := get_move_v1(position, moves, i)
+		move := get_move_v2(moves, i)
 
 		new_eval := engine.q_search(position.Update(move), ply+1, !turn, -beta, -alpha) * -1
 
