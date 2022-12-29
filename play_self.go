@@ -9,7 +9,9 @@ import (
 func play_self(white Engine, black Engine, game *chess.Game) {
 	white.reset_TT(game.Position())
 	black.reset_TT(game.Position())
+
 	print("Starting Engine vs Engine Game", "\n")
+
 	print("White Player: " + white.getName())
 	print("Black Player: " + black.getName())
 	print("")

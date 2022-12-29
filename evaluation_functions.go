@@ -4,6 +4,10 @@ import (
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
+//	--------------------------------------------------------------------------------------
+// 		Piece Values
+//	--------------------------------------------------------------------------------------
+
 // piece weights
 const pawn int = 100
 const knight int = 320
@@ -22,33 +26,9 @@ var PVM map[chess.PieceType]int = map[chess.PieceType]int{
 	chess.Pawn:   pawn,
 }
 
-// Checks for Checkmate, Stalemate, and Total Piece Delta
-func eval_v1(position *chess.Position) int {
-	// faster than doing two comparisons
-	if position.Status() != chess.NoMethod {
-		if position.Status() == chess.Stalemate {
-			return 0
-		}
-		if position.Status() == chess.Checkmate {
-			if position.Turn() == chess.White {
-				return -CHECKMATE_VALUE
-			} else {
-				return CHECKMATE_VALUE
-			}
-		}
-	}
-
-	squares := position.Board().SquareMap()
-	var delta int = 0
-	for _, piece := range squares {
-		if piece.Color() == chess.Black {
-			delta -= PVM[piece.Type()]
-		} else {
-			delta += PVM[piece.Type()]
-		}
-	}
-	return delta
-}
+//	--------------------------------------------------------------------------------------
+// 		Piece Square Table Stuff
+//	--------------------------------------------------------------------------------------
 
 var FLIP = []int{
 	56, 57, 58, 59, 60, 61, 62, 63,
@@ -122,6 +102,67 @@ var PST_MG = map[chess.PieceType][]int{
 		0, 0, 5, -10, -10, 0, 5, 0,
 		0, 0, 20, -10, -10, 0, 20, 0,
 	},
+}
+
+var PST_EG = map[chess.PieceType][]int{
+	chess.Pawn:   PST_MG[chess.Pawn],
+	chess.Knight: PST_MG[chess.Knight],
+	chess.Bishop: PST_MG[chess.Bishop],
+	chess.Rook:   PST_MG[chess.Rook],
+	chess.Queen:  PST_MG[chess.Queen],
+	chess.King: {
+		-50, -10, 0, 0, 0, 0, -10, -50,
+		-10, 0, 10, 10, 10, 10, 0, -10,
+		0, 10, 15, 15, 15, 15, 10, 0,
+		0, 10, 15, 20, 20, 15, 10, 0,
+		0, 10, 15, 20, 20, 15, 10, 0,
+		0, 10, 15, 15, 15, 15, 10, 0,
+		-10, 0, 10, 10, 10, 10, 0, -10,
+		-50, -10, 0, 0, 0, 0, -10, -50,
+	},
+}
+
+//	--------------------------------------------------------------------------------------
+// 		Tapered Evaluation Values
+//	--------------------------------------------------------------------------------------
+
+var PawnPhase int = 0
+var KnightPhase int = 1
+var BishopPhase int = 1
+var RookPhase int = 2
+var QueenPhase int = 4
+var TotalPhase int = PawnPhase*16 + KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
+
+//	--------------------------------------------------------------------------------------
+// 		Position Evaluation Function
+//	--------------------------------------------------------------------------------------
+
+// Checks for Checkmate, Stalemate, and Total Piece Delta
+func eval_v1(position *chess.Position) int {
+	// faster than doing two comparisons
+	if position.Status() != chess.NoMethod {
+		if position.Status() == chess.Stalemate {
+			return 0
+		}
+		if position.Status() == chess.Checkmate {
+			if position.Turn() == chess.White {
+				return -CHECKMATE_VALUE
+			} else {
+				return CHECKMATE_VALUE
+			}
+		}
+	}
+
+	squares := position.Board().SquareMap()
+	var delta int = 0
+	for _, piece := range squares {
+		if piece.Color() == chess.Black {
+			delta -= PVM[piece.Type()]
+		} else {
+			delta += PVM[piece.Type()]
+		}
+	}
+	return delta
 }
 
 // Also uses PST
@@ -221,31 +262,6 @@ func eval_v4(position *chess.Position, ply int) int {
 
 	return delta
 }
-
-var PST_EG = map[chess.PieceType][]int{
-	chess.Pawn:   PST_MG[chess.Pawn],
-	chess.Knight: PST_MG[chess.Knight],
-	chess.Bishop: PST_MG[chess.Bishop],
-	chess.Rook:   PST_MG[chess.Rook],
-	chess.Queen:  PST_MG[chess.Queen],
-	chess.King: {
-		-50, -10, 0, 0, 0, 0, -10, -50,
-		-10, 0, 10, 10, 10, 10, 0, -10,
-		0, 10, 15, 15, 15, 15, 10, 0,
-		0, 10, 15, 20, 20, 15, 10, 0,
-		0, 10, 15, 20, 20, 15, 10, 0,
-		0, 10, 15, 15, 15, 15, 10, 0,
-		-10, 0, 10, 10, 10, 10, 0, -10,
-		-50, -10, 0, 0, 0, 0, -10, -50,
-	},
-}
-
-var PawnPhase int = 0
-var KnightPhase int = 1
-var BishopPhase int = 1
-var RookPhase int = 2
-var QueenPhase int = 4
-var TotalPhase int = PawnPhase*16 + KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
 
 // Tapered Evaluation
 func eval_v5(position *chess.Position, ply int) int {

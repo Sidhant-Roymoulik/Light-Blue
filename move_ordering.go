@@ -124,7 +124,7 @@ func move_ordering_v2(position *chess.Position) []*chess.Move {
 }
 
 //	--------------------------------------------------------------------------------------
-// 		Less Efficient Move Picking
+// 		Slightly Less Efficient Move Picking
 //	--------------------------------------------------------------------------------------
 
 func get_move_v1(position *chess.Position, moves []*chess.Move, start int) *chess.Move {
