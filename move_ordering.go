@@ -124,7 +124,7 @@ func move_ordering_v2(position *chess.Position) []*chess.Move {
 }
 
 //	--------------------------------------------------------------------------------------
-// 		Slightly Less Efficient Move Picking
+// 		Less Efficient Move Picking
 //	--------------------------------------------------------------------------------------
 
 func get_move_v1(position *chess.Position, moves []*chess.Move, start int) *chess.Move {
@@ -140,7 +140,7 @@ func get_move_v1(position *chess.Position, moves []*chess.Move, start int) *ches
 }
 
 //	--------------------------------------------------------------------------------------
-// 		Efficient Move Picking
+// 		Slightly Less Efficient Move Picking
 //	--------------------------------------------------------------------------------------
 
 type scored_move struct {
@@ -165,4 +165,19 @@ func get_move_v2(moves []scored_move, start int) *chess.Move {
 		}
 	}
 	return moves[start].move
+}
+
+//	--------------------------------------------------------------------------------------
+// 		Efficient Move Picking
+//	--------------------------------------------------------------------------------------
+
+func score_moves_v2(moves []*chess.Move, board *chess.Board) []scored_move {
+	scores := make([]scored_move, len(moves))
+	for i := 0; i < len(moves); i++ {
+		scores[i] = scored_move{moves[i], eval_move_v2(moves[i], board)}
+		if scores[i].eval > scores[0].eval { // Use first guaranteed iteration to sort first move
+			scores[i], scores[0] = scores[0], scores[i]
+		}
+	}
+	return scores
 }

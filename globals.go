@@ -21,7 +21,7 @@ var CHESS_FENs map[string]string = map[string]string{
 //	Parameters
 // --------------------------------------------------------------------------------------
 
-const TIME_LIMIT time.Duration = 5 * 1000000000 // Time in nanosec
+const TIME_LIMIT time.Duration = 10 * 1000000000 // Time in nanosec
 const MAX_CONST_DEPTH int = 2
 const CHECKMATE_VALUE int = 1000000
 
