@@ -88,7 +88,8 @@ func (engine *engine_version_1_3) minimax_start(position *chess.Position, turn b
 		if time.Since(engine.start) > engine.time_limit {
 			break
 		}
-		move := get_move_v2(moves, i)
+
+		move := get_move_v3(moves, i)
 
 		var updated_position = position.Update(move)
 		var updated_hash = Zobrist.GenHash(updated_position)
@@ -146,7 +147,7 @@ func (engine *engine_version_1_3) minimax(position *chess.Position, ply int, tur
 	moves := score_moves_v2(position.ValidMoves(), position.Board())
 
 	for i := 0; i < len(moves); i++ {
-		move := get_move_v2(moves, i)
+		move := get_move_v3(moves, i)
 
 		var updated_position = position.Update(move)
 		var updated_hash = Zobrist.GenHash(updated_position)
@@ -206,7 +207,7 @@ func (engine *engine_version_1_3) q_search(position *chess.Position, ply int, tu
 	}
 
 	for i := 0; i < len(moves); i++ {
-		move := get_move_v2(moves, i)
+		move := get_move_v3(moves, i)
 
 		new_eval := engine.q_search(position.Update(move), ply+1, !turn, -beta, -alpha) * -1
 

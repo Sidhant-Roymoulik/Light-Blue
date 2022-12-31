@@ -181,3 +181,17 @@ func score_moves_v2(moves []*chess.Move, board *chess.Board) []scored_move {
 	}
 	return scores
 }
+
+func get_move_v3(moves []scored_move, start int) *chess.Move {
+	if start == 0 { //	First move is already sorted
+		return moves[0].move
+	}
+	best_eval := moves[start].eval
+	for i := start + 1; i < len(moves); i++ {
+		if moves[i].eval > best_eval {
+			moves[start], moves[i] = moves[i], moves[start]
+			best_eval = moves[i].eval
+		}
+	}
+	return moves[start].move
+}
