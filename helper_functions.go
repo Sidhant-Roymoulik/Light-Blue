@@ -27,6 +27,22 @@ func game_from_fen(str string) *chess.Game {
 	return chess.NewGame(fen, chess.UseNotation(chess.AlgebraicNotation{}))
 }
 
+func game_from_opening(opening string) *chess.Game {
+	fen, err := chess.FEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+	if err != nil {
+		panic(err)
+	}
+	game := chess.NewGame(fen, chess.UseNotation(chess.AlgebraicNotation{}))
+	for _, move := range CHESS_OPENINGS[opening] {
+		move, err := chess.AlgebraicNotation{}.Decode(game.Position(), move)
+		if err != nil {
+			panic(err)
+		}
+		game.Move(move)
+	}
+	return game
+}
+
 func getMultiplier(turn bool) int {
 	if turn {
 		return 1
