@@ -79,12 +79,12 @@ func is_q_move(move *chess.Move) bool {
 	if move.HasTag(chess.EnPassant) {
 		return true
 	}
-	// if move.HasTag(chess.MoveTag(chess.Checkmate)) {
-	// 	return true
-	// }
-	// if move.HasTag(chess.Check) {
-	// 	return true
-	// }
+	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
+		return true
+	}
+	if move.HasTag(chess.Check) {
+		return true
+	}
 	if move.Promo() != chess.NoPieceType {
 		return true
 	}

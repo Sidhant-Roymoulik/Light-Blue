@@ -16,6 +16,8 @@ type EngineClass struct {
 	age               uint8        // this is used to age off entries in the transposition table, in the form of a half move clock
 	zobristHistory    [1024]uint64 // draw detection history
 	zobristHistoryPly uint16       // draw detection ply
+	prev_guess        int          // used to decide between mtd(f) and mtd(bi)
+	use_mtd_f         bool
 }
 
 type Engine interface {
@@ -36,7 +38,7 @@ type EngineUpgrades struct {
 	delta_pruning       bool
 	iterative_deepening bool
 	transposition_table bool
-	mtd_f               bool
+	mtd                 bool
 	lazy_smp            bool
 }
 

@@ -11,7 +11,7 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 
 	print("Starting Human vs Engine Game", "\n")
 
-	var human_white bool = true
+	var human_white bool = false
 	var white, black Engine
 
 	if human_white {

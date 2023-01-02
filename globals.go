@@ -13,17 +13,19 @@ const DEBUG bool = true
 // --------------------------------------------------------------------------------------
 
 var CHESS_OPENINGS map[string][]string = map[string][]string{
-	"Start Position": {},
-	"Italian Game":   {"e4", "e5", "Nf3", "Nc6", "Bc4"},
+	"Start Position":   {},
+	"Sicilian Defense": {"e4", "c5"},
+	"Italian Game":     {"e4", "e5", "Nf3", "Nc6", "Bc4"},
 }
 
 // --------------------------------------------------------------------------------------
 //	Parameters
 // --------------------------------------------------------------------------------------
 
-const TIME_LIMIT time.Duration = 1 * 1000000000 // Time in nanosec
+const TIME_LIMIT time.Duration = 10 * 1000000000 // Time in nanosec
 const MAX_CONST_DEPTH int = 2
 const CHECKMATE_VALUE int = 1000000
+const MTD_CUTOFF int = 10
 
 // --------------------------------------------------------------------------------------
 //	Counters
