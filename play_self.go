@@ -39,9 +39,9 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 
 		print("Best Move:", move.String())
 		if eval > 100000 {
-			print("Eval: Mate in", CHECKMATE_VALUE-eval, "ply")
+			print("Eval: Mate in", (CHECKMATE_VALUE-eval+1)/2)
 		} else if eval < -100000 {
-			print("Eval: Mate in", CHECKMATE_VALUE+eval, "ply")
+			print("Eval: Mate in", (CHECKMATE_VALUE+eval+1)/2)
 		} else {
 			print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 		}

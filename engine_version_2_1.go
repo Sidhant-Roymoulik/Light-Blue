@@ -42,6 +42,7 @@ func new_engine_version_2_1() engine_version_2_1 {
 
 func (engine *engine_version_2_1) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
+	engine.Add_Zobrist_History(Zobrist.GenHash(position))
 
 	best_eval, best_move = engine.iterative_deepening(position)
 
