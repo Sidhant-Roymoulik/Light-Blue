@@ -7,17 +7,17 @@ import (
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
-// Upgrades over Version 1.3:
-// 		Adds MTD(f) and MTD(bi)
+// Upgrades over Version 2.0:
+// 		Better MTD selection
 
-type engine_version_2_0 struct {
+type engine_version_2_1 struct {
 	EngineClass
 }
 
-func new_engine_version_2_0() engine_version_2_0 {
-	return engine_version_2_0{
+func new_engine_version_2_1() engine_version_2_1 {
+	return engine_version_2_1{
 		EngineClass{
-			name:       "Version 2.0 (Mixed MTD)",
+			name:       "Version 2.1 (MTD Selection)",
 			max_ply:    0,
 			time_limit: TIME_LIMIT,
 			upgrades: EngineUpgrades{
@@ -40,7 +40,7 @@ func new_engine_version_2_0() engine_version_2_0 {
 
 }
 
-func (engine *engine_version_2_0) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *engine_version_2_1) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
 
 	best_eval, best_move = engine.iterative_deepening(position)
@@ -52,7 +52,7 @@ func (engine *engine_version_2_0) run(position *chess.Position) (best_eval int, 
 	return
 }
 
-func (engine *engine_version_2_0) iterative_deepening(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *engine_version_2_1) iterative_deepening(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	engine.start = time.Now()
 	engine.age ^= 1
 	engine.use_mtd_f = false
@@ -90,15 +90,19 @@ func (engine *engine_version_2_0) iterative_deepening(position *chess.Position) 
 	return
 }
 
-func (engine *engine_version_2_0) mtd_f(position *chess.Position, g int) (eval int, move *chess.Move) {
+func (engine *engine_version_2_1) mtd_f(position *chess.Position, g int) (eval int, move *chess.Move) {
 	mtd_f_iter := 0
 	eval = g
 	upper := CHECKMATE_VALUE
 	lower := -CHECKMATE_VALUE
 	var new_move *chess.Move = nil
-	for lower < upper {
+	for lower < upper-MTD_EVAL_CUTOFF {
 		if engine.time_up() {
 			break
+		}
+		if mtd_f_iter > MTD_ITER_CUTOFF { // If there is an eval jump, use MTD(bi)
+			print("MTD(f) Iterations:", mtd_f_iter)
+			return engine.mtd_bi(position)
 		}
 		beta := Max(eval, lower+1)
 		eval, new_move = engine.minimax_start(position, position.Turn() == chess.White, beta-1, beta)
@@ -115,12 +119,12 @@ func (engine *engine_version_2_0) mtd_f(position *chess.Position, g int) (eval i
 	print("MTD(f) Iterations:", mtd_f_iter)
 	return
 }
-func (engine *engine_version_2_0) mtd_bi(position *chess.Position) (eval int, move *chess.Move) {
+func (engine *engine_version_2_1) mtd_bi(position *chess.Position) (eval int, move *chess.Move) {
 	mtd_bi_iter := 0
 	upper := CHECKMATE_VALUE
 	lower := -CHECKMATE_VALUE
 	var new_move *chess.Move = nil
-	for lower < upper {
+	for lower < upper-MTD_EVAL_CUTOFF {
 		if engine.time_up() {
 			break
 		}
@@ -140,7 +144,7 @@ func (engine *engine_version_2_0) mtd_bi(position *chess.Position) (eval int, mo
 	return
 }
 
-func (engine *engine_version_2_0) minimax_start(position *chess.Position, turn bool, alpha int, beta int) (eval int, move *chess.Move) {
+func (engine *engine_version_2_1) minimax_start(position *chess.Position, turn bool, alpha int, beta int) (eval int, move *chess.Move) {
 	states++
 
 	var hash uint64 = Zobrist.GenHash(position)
@@ -204,7 +208,8 @@ func (engine *engine_version_2_0) minimax_start(position *chess.Position, turn b
 
 	return best_eval, best_move
 }
-func (engine *engine_version_2_0) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (eval int) {
+
+func (engine *engine_version_2_1) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int) (eval int) {
 	states++
 
 	if engine.time_up() {
@@ -273,7 +278,7 @@ func (engine *engine_version_2_0) minimax(position *chess.Position, ply int, tur
 	return best_eval
 }
 
-func (engine *engine_version_2_0) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int) (eval int) {
+func (engine *engine_version_2_1) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int) (eval int) {
 	q_states++
 
 	start_eval := eval_v5(position, ply) * getMultiplier(turn)
