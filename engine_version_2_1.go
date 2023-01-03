@@ -69,14 +69,16 @@ func (engine *engine_version_2_1) iterative_deepening(position *chess.Position) 
 		} else {
 			new_eval, new_move = engine.mtd_bi(position)
 		}
-		// new_eval, new_move := engine.minimax_start(position, position.Turn() == chess.White, -math.MaxInt, math.MaxInt)
 
 		if engine.time_up() {
 			break
 		}
 
 		best_eval, best_move = new_eval, new_move
-		print("Top Level Move:", best_move, "Eval:", best_eval, "Depth:", engine.max_ply)
+
+		if DEBUG {
+			print("Top Level Move:", best_move, "Eval:", best_eval, "Depth:", engine.max_ply)
+		}
 
 		if int(math.Abs(float64(best_eval)-float64(engine.prev_guess))) < MTD_ITER_CUTOFF {
 			engine.use_mtd_f = true // Switch from MTD(bi) to MTD(f) if the gap between guesses is low
@@ -102,7 +104,9 @@ func (engine *engine_version_2_1) mtd_f(position *chess.Position, g int) (eval i
 			break
 		}
 		if mtd_f_iter > MTD_ITER_CUTOFF { // If there is an eval jump, use MTD(bi)
-			print("MTD(f) Iterations:", mtd_f_iter)
+			if DEBUG {
+				print("MTD(f) Iterations:", mtd_f_iter)
+			}
 			return engine.mtd_bi(position)
 		}
 		beta := Max(eval, lower+1)
@@ -117,7 +121,9 @@ func (engine *engine_version_2_1) mtd_f(position *chess.Position, g int) (eval i
 		}
 		mtd_f_iter++
 	}
-	print("MTD(f) Iterations:", mtd_f_iter)
+	if DEBUG {
+		print("MTD(f) Iterations:", mtd_f_iter)
+	}
 	return
 }
 func (engine *engine_version_2_1) mtd_bi(position *chess.Position) (eval int, move *chess.Move) {
@@ -141,7 +147,9 @@ func (engine *engine_version_2_1) mtd_bi(position *chess.Position) (eval int, mo
 		}
 		mtd_bi_iter++
 	}
-	print("MTD(bi) Iterations:", mtd_bi_iter)
+	if DEBUG {
+		print("MTD(bi) Iterations:", mtd_bi_iter)
+	}
 	return
 }
 
@@ -218,6 +226,11 @@ func (engine *engine_version_2_1) minimax(position *chess.Position, ply int, tur
 	}
 
 	var hash uint64 = Zobrist.GenHash(position)
+
+	if engine.Is_Draw_By_Repetition(hash) {
+		return 0
+	}
+
 	var entry *SearchEntry = engine.tt.Probe(hash)
 	var tt_eval, should_use, _ = entry.Get(hash, 0, engine.max_ply-ply, alpha, beta)
 	if should_use {
@@ -230,9 +243,6 @@ func (engine *engine_version_2_1) minimax(position *chess.Position, ply int, tur
 	}
 	if len(position.ValidMoves()) == 0 {
 		return eval_v5(position, ply) * getMultiplier(turn)
-	}
-	if engine.Is_Draw_By_Repetition(hash) {
-		return 0
 	}
 
 	var best_eval int = alpha

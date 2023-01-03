@@ -64,6 +64,7 @@ func (engine *EngineClass) Add_Zobrist_History(hash uint64) {
 
 // decrements ply counter, which means history will be overwritten
 func (engine *EngineClass) Remove_Zobrist_History() {
+	engine.zobristHistory[engine.zobristHistoryPly] = 0
 	engine.zobristHistoryPly--
 }
 
