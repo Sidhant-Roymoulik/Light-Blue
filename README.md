@@ -23,7 +23,7 @@ A Chess Engine Built in Golang
 
  - [ ] Openings
  - [ ] Tablebases
- - [ ] Endgames
+ - [ ] Killer Moves Heuristic
  - [ ] Razoring
  - [ ] Monte-Carlo Tree Search
 
