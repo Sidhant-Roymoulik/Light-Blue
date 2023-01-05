@@ -18,6 +18,7 @@ type EngineClass struct {
 	zobristHistoryPly uint16       // draw detection ply
 	prev_guess        int          // used to decide between mtd(f) and mtd(bi)
 	use_mtd_f         bool
+	quit_mtd          bool
 }
 
 type Engine interface {
@@ -28,6 +29,7 @@ type Engine interface {
 	Add_Zobrist_History(hash uint64)
 	Remove_Zobrist_History()
 	Is_Draw_By_Repetition(hash uint64) bool
+	reset(position *chess.Position)
 }
 
 type EngineUpgrades struct {
@@ -64,7 +66,6 @@ func (engine *EngineClass) Add_Zobrist_History(hash uint64) {
 
 // decrements ply counter, which means history will be overwritten
 func (engine *EngineClass) Remove_Zobrist_History() {
-	engine.zobristHistory[engine.zobristHistoryPly] = 0
 	engine.zobristHistoryPly--
 }
 
@@ -75,4 +76,20 @@ func (engine *EngineClass) Is_Draw_By_Repetition(hash uint64) bool {
 		}
 	}
 	return false
+}
+
+func (engine *EngineClass) reset(position *chess.Position) {
+	engine.tt.Clear()
+	engine.tt.Resize(64, 16)
+
+	engine.max_ply = 0
+	engine.time_limit = TIME_LIMIT
+	engine.tt = TransTable[SearchEntry]{}
+	engine.age = 0
+	engine.zobristHistory = [1024]uint64{}
+	engine.zobristHistoryPly = 0
+	engine.prev_guess = 0
+	engine.quit_mtd = false
+
+	engine.zobristHistory[0] = Zobrist.GenHash(position)
 }

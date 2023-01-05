@@ -24,14 +24,14 @@ func main() {
 
 func test_play_self() {
 	game := game_from_opening("Start Position")
-	engine_1 := new_engine_version_2_1()
-	engine_2 := new_engine_version_2_1()
+	engine_1 := new_engine_version_2_3()
+	engine_2 := new_engine_version_2_3()
 	play_self(&engine_1, &engine_2, game)
 }
 
 func test_play_human() {
 	game := game_from_opening("Start Position")
-	engine_1 := new_engine_version_2_1()
+	engine_1 := new_engine_version_2_2()
 	engine_2 := new_engine_human()
 	play_human(&engine_1, &engine_2, game)
 }

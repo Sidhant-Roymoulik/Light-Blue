@@ -7,8 +7,8 @@ import (
 )
 
 func play_self(white Engine, black Engine, game *chess.Game) {
-	white.reset_TT(game.Position())
-	black.reset_TT(game.Position())
+	white.reset(game.Position())
+	black.reset(game.Position())
 
 	print("Starting Engine vs Engine Game", "\n")
 
