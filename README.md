@@ -17,7 +17,7 @@ A Chess Engine Built in Golang
 
  - [x] Move Picking
  - [x] MTD(f) & MTD(bi)
- - [ ] Lazy SMP (Parrallelize Engine using Golang)
+ - [x] Lazy SMP (Parrallelize Engine using Golang)
 
 ### Additional Optimizations
 
