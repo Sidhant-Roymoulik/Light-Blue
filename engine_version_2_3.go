@@ -29,6 +29,7 @@ func new_engine_version_2_3() engine_version_2_3 {
 				transposition_table: true,
 				mtd:                 true,
 				concurrent:          true,
+				killer_moves:        true,
 			},
 			tt:                TransTable[SearchEntry]{},
 			age:               0,
@@ -36,6 +37,7 @@ func new_engine_version_2_3() engine_version_2_3 {
 			zobristHistoryPly: 0,
 			prev_guess:        0,
 			quit_mtd:          false,
+			killer_moves:      [100][2]*chess.Move{},
 		},
 	}
 
@@ -79,11 +81,8 @@ func (engine *engine_version_2_3) iterative_deepening(position *chess.Position) 
 		best_eval, best_move = new_eval, new_move
 		engine.prev_guess = best_eval
 
-		// Empty channels of evals and moves that took longer
-		// for len(eval_chan) > 0 {
-		new_eval = <-eval_chan
-		new_move = <-move_chan
-		// }
+		<-eval_chan
+		<-move_chan
 
 		if DEBUG {
 			// print("Time:", time.Since(engine.start))
@@ -177,7 +176,7 @@ func (engine *engine_version_2_3) minimax_start(position *chess.Position, turn b
 		return tt_eval, tt_move
 	}
 
-	moves := score_moves_v2(position.ValidMoves(), position.Board())
+	moves := score_moves_v3(position.ValidMoves(), position.Board(), engine.killer_moves[0])
 
 	var best_eval int = alpha
 	var best_move *chess.Move = nil
@@ -190,9 +189,6 @@ func (engine *engine_version_2_3) minimax_start(position *chess.Position, turn b
 
 		move := get_move_v3(moves, i)
 
-		// var updated_position = position.Update(move)
-		// var updated_hash = Zobrist.GenHash(updated_position)
-
 		new_eval := engine.minimax(position.Update(move), 1, !turn, -beta, -alpha, append(hash_history, hash)) * -1
 
 		// print("Top Level Move:", move, "Eval:", new_eval)
@@ -202,6 +198,12 @@ func (engine *engine_version_2_3) minimax_start(position *chess.Position, turn b
 		// }
 
 		if new_eval >= beta {
+
+			if !move.HasTag(chess.Capture) && move != engine.killer_moves[0][0] {
+				engine.killer_moves[0][1] = engine.killer_moves[0][0]
+				engine.killer_moves[0][0] = move
+			}
+
 			best_eval = beta
 
 			best_move = move
@@ -249,7 +251,10 @@ func (engine *engine_version_2_3) minimax(position *chess.Position, ply int, tur
 	if ply > engine.max_ply {
 		return engine.q_search(position, ply, turn, alpha, beta)
 	}
-	if len(position.ValidMoves()) == 0 {
+
+	moves := score_moves_v3(position.ValidMoves(), position.Board(), engine.killer_moves[ply])
+
+	if len(moves) == 0 {
 		return eval_v5(position, ply) * getMultiplier(turn)
 	}
 
@@ -257,17 +262,18 @@ func (engine *engine_version_2_3) minimax(position *chess.Position, ply int, tur
 	var best_move *chess.Move = nil
 	var tt_flag = AlphaFlag
 
-	moves := score_moves_v2(position.ValidMoves(), position.Board())
-
 	for i := 0; i < len(moves); i++ {
 		move := get_move_v3(moves, i)
-
-		// var updated_position = position.Update(move)
-		// var updated_hash = Zobrist.GenHash(updated_position)
 
 		new_eval := engine.minimax(position.Update(move), ply+1, !turn, -beta, -alpha, append(hash_history, hash)) * -1
 
 		if new_eval >= beta {
+
+			if !move.HasTag(chess.Capture) && move != engine.killer_moves[ply][0] {
+				engine.killer_moves[ply][1] = engine.killer_moves[ply][0]
+				engine.killer_moves[ply][0] = move
+			}
+
 			best_eval = beta
 
 			best_move = move
@@ -330,12 +336,12 @@ func (engine *engine_version_2_3) q_search(position *chess.Position, ply int, tu
 	return alpha
 }
 
-func (engine *engine_version_2_3) Is_Draw_By_Repetition_Local(hash uint64, move_history []uint64) bool {
-	for i := 0; i < len(move_history); i++ {
-		if move_history[i] == 0 {
+func (engine *engine_version_2_3) Is_Draw_By_Repetition_Local(hash uint64, hash_history []uint64) bool {
+	for i := 0; i < len(hash_history); i++ {
+		if hash_history[i] == 0 {
 			return false
 		}
-		if move_history[i] == hash {
+		if hash_history[i] == hash {
 			return true
 		}
 	}

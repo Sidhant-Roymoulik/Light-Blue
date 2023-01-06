@@ -19,13 +19,13 @@ type EngineClass struct {
 	prev_guess        int          // used to decide between mtd(f) and mtd(bi)
 	use_mtd_f         bool
 	quit_mtd          bool
+	killer_moves      [100][2]*chess.Move
 }
 
 type Engine interface {
 	getName() string
 	time_up() bool
 	run(*chess.Position) (int, *chess.Move)
-	reset_TT(position *chess.Position)
 	Add_Zobrist_History(hash uint64)
 	Remove_Zobrist_History()
 	Is_Draw_By_Repetition(hash uint64) bool
@@ -41,6 +41,7 @@ type EngineUpgrades struct {
 	iterative_deepening bool
 	transposition_table bool
 	mtd                 bool
+	killer_moves        bool
 	lazy_smp            bool
 }
 
@@ -50,12 +51,6 @@ func (engine *EngineClass) getName() string {
 
 func (engine *EngineClass) time_up() bool {
 	return time.Since(engine.start) > engine.time_limit
-}
-
-func (engine *EngineClass) reset_TT(position *chess.Position) {
-	engine.tt.Clear()
-	engine.tt.Resize(64, 16)
-	engine.zobristHistory[engine.zobristHistoryPly] = Zobrist.GenHash(position)
 }
 
 // adds to zobrist history, which is used for draw detection
@@ -79,9 +74,6 @@ func (engine *EngineClass) Is_Draw_By_Repetition(hash uint64) bool {
 }
 
 func (engine *EngineClass) reset(position *chess.Position) {
-	engine.tt.Clear()
-	engine.tt.Resize(64, 16)
-
 	engine.max_ply = 0
 	engine.time_limit = TIME_LIMIT
 	engine.tt = TransTable[SearchEntry]{}
@@ -89,7 +81,12 @@ func (engine *EngineClass) reset(position *chess.Position) {
 	engine.zobristHistory = [1024]uint64{}
 	engine.zobristHistoryPly = 0
 	engine.prev_guess = 0
+	engine.use_mtd_f = false
 	engine.quit_mtd = false
+	engine.killer_moves = [100][2]*chess.Move{}
+
+	engine.tt.Clear()
+	engine.tt.Resize(64, 16)
 
 	engine.zobristHistory[0] = Zobrist.GenHash(position)
 }

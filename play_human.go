@@ -7,7 +7,7 @@ import (
 )
 
 func play_human(engine Engine, human Engine, game *chess.Game) {
-	engine.reset_TT(game.Position())
+	engine.reset(game.Position())
 
 	print("Starting Human vs Engine Game", "\n")
 

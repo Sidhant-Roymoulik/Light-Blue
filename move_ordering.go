@@ -57,12 +57,15 @@ func eval_move_v2(move *chess.Move, board *chess.Board) int {
 	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
 		return CHECKMATE_VALUE
 	}
-
 	if move.HasTag(chess.MoveTag(chess.KingSideCastle)) {
 		return 50
 	}
 	if move.HasTag(chess.MoveTag(chess.QueenSideCastle)) {
 		return 40
+	}
+
+	if move.HasTag(chess.Check) {
+		return 10 + MVV_LVA(move, board)
 	}
 
 	return MVV_LVA(move, board)
@@ -194,4 +197,22 @@ func get_move_v3(moves []scored_move, start int) *chess.Move {
 		}
 	}
 	return moves[start].move
+}
+
+// Adding Killer Moves
+func score_moves_v3(moves []*chess.Move, board *chess.Board, killer_moves [2]*chess.Move) []scored_move {
+	scores := make([]scored_move, len(moves))
+	for i := 0; i < len(moves); i++ {
+		if moves[i] == killer_moves[0] {
+			scores[i] = scored_move{moves[i], 9}
+		} else if moves[i] == killer_moves[1] {
+			scores[i] = scored_move{moves[i], 5}
+		} else {
+			scores[i] = scored_move{moves[i], eval_move_v2(moves[i], board)}
+		}
+		if scores[i].eval > scores[0].eval { // Use first guaranteed iteration to sort first move
+			scores[i], scores[0] = scores[0], scores[i]
+		}
+	}
+	return scores
 }
