@@ -1,6 +1,7 @@
 package main
 
 import (
+	"runtime"
 	"time"
 
 	"github.com/Sidhant-Roymoulik/chess"
@@ -20,6 +21,7 @@ type EngineClass struct {
 	use_mtd_f         bool
 	quit_mtd          bool
 	killer_moves      [100][2]*chess.Move
+	threads           int
 }
 
 type Engine interface {
@@ -84,6 +86,7 @@ func (engine *EngineClass) reset(position *chess.Position) {
 	engine.use_mtd_f = false
 	engine.quit_mtd = false
 	engine.killer_moves = [100][2]*chess.Move{}
+	engine.threads = runtime.GOMAXPROCS(0)
 
 	engine.tt.Clear()
 	engine.tt.Resize(64, 16)

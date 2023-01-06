@@ -48,7 +48,8 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 		print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
 		print("Unique Positions Checked:", states)
 		print("Q-Positions Checked:", q_states)
-		print("Hashes:", hash_hits, hash_writes)
+		print("Hashes Used:", hash_hits)
+		print("Total:", states+q_states-hash_hits)
 		// print(game.FEN())
 		print(game.Position().Board().Draw())
 	}
