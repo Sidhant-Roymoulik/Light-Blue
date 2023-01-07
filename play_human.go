@@ -48,11 +48,11 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 		}
 
 		if (game.Position().Turn() == chess.Black && engine == white) || (game.Position().Turn() == chess.White && engine == black) {
-			print("Best Move:", move)
+			print("Best Move:", move.String())
 			if eval > 100000 {
-				print("Eval: Mate in", CHECKMATE_VALUE-eval, "ply")
+				print("Eval: Mate in", (CHECKMATE_VALUE-eval+1)/2)
 			} else if eval < -100000 {
-				print("Eval: Mate in", CHECKMATE_VALUE+eval, "ply")
+				print("Eval: Mate in", (CHECKMATE_VALUE+eval+1)/2)
 			} else {
 				print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 			}

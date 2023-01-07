@@ -47,6 +47,12 @@ type EngineUpgrades struct {
 	lazy_smp            bool
 }
 
+type Result struct {
+	eval  int
+	move  *chess.Move
+	depth int
+}
+
 func (engine *EngineClass) getName() string {
 	return engine.name
 }

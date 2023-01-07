@@ -9,18 +9,17 @@ import (
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
-// Upgrades over Version 2.3:
-// 		Lazy SMP
-// 	-	MTD
+// Upgrades over Version 3.1:
+// 		MTD
 
-type engine_version_3_0 struct {
+type engine_version_3_1 struct {
 	EngineClass
 }
 
-func new_engine_version_3_0() engine_version_3_0 {
-	return engine_version_3_0{
+func new_engine_version_3_1() engine_version_3_1 {
+	return engine_version_3_1{
 		EngineClass{
-			name:       "Version 3.0 (Lazy SMP)",
+			name:       "Version 3.1 (Lazy SMP + MTD)",
 			max_ply:    0,
 			time_limit: TIME_LIMIT,
 			upgrades: EngineUpgrades{
@@ -30,10 +29,10 @@ func new_engine_version_3_0() engine_version_3_0 {
 				q_search:            true,
 				delta_pruning:       true,
 				transposition_table: true,
-				// mtd:                 true,
-				concurrent:   true,
-				killer_moves: true,
-				lazy_smp:     true,
+				mtd:                 true,
+				concurrent:          true,
+				killer_moves:        true,
+				lazy_smp:            true,
 			},
 			tt:                TransTable[SearchEntry]{},
 			age:               0,
@@ -48,7 +47,7 @@ func new_engine_version_3_0() engine_version_3_0 {
 
 }
 
-func (engine *engine_version_3_0) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *engine_version_3_1) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	resetCounters()
 
 	engine.Add_Zobrist_History(Zobrist.GenHash(position))
@@ -64,7 +63,7 @@ func (engine *engine_version_3_0) run(position *chess.Position) (best_eval int, 
 	return
 }
 
-func (engine *engine_version_3_0) lazy_smp(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *engine_version_3_1) lazy_smp(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	result_chan := make(chan *Result, 200)
 
 	best_depth := 0
@@ -94,8 +93,9 @@ func (engine *engine_version_3_0) lazy_smp(position *chess.Position) (best_eval 
 			best_depth = result.depth
 		}
 		if DEBUG {
-			print("Move:", result.move, "Eval:", result.eval, "Depth:", result.depth)
+
 		}
+		print("Lazy Move:", result.move, "Eval:", result.eval, "Depth:", result.depth)
 		result = <-result_chan
 	}
 	engine.max_ply = best_depth
@@ -103,27 +103,38 @@ func (engine *engine_version_3_0) lazy_smp(position *chess.Position) (best_eval 
 	return
 }
 
-func (engine *engine_version_3_0) iterative_deepening(position *chess.Position, inc int, result_chan chan *Result) {
+func (engine *engine_version_3_1) iterative_deepening(position *chess.Position, inc int, result_chan chan *Result) {
 	engine.start = time.Now()
 	engine.age ^= 1
 
 	max_depth := 0
+	prev_guess := 0
 	for {
 		max_depth += inc
 
-		new_eval, new_move := engine.minimax_start(position, position.Turn() == chess.White, -math.MaxInt, math.MaxInt, engine.zobristHistory[:], max_depth)
+		eval_chan := make(chan int, 2)
+		move_chan := make(chan *chess.Move, 2)
+		quit_chan := make(chan bool)
+
+		go engine.mtd_bi(position, max_depth, eval_chan, move_chan, quit_chan)
+		go engine.mtd_f(position, prev_guess, max_depth, eval_chan, move_chan, quit_chan)
+
+		// new_eval, new_move := engine.minimax_start(position, position.Turn() == chess.White, -math.MaxInt, math.MaxInt, engine.zobristHistory[:], max_depth)
+
+		new_eval := <-eval_chan
+		new_move := <-move_chan
 
 		if engine.time_up() {
 			break
 		}
 
 		result_chan <- &Result{new_eval, new_move, max_depth}
-		engine.prev_guess = new_eval
+		prev_guess = new_eval
 
-		// if DEBUG {
-		// 	// print("Time:", time.Since(engine.start))
-		// 	print("Best Move:", result.move, "Eval:", result.eval, "Depth:", max_depth)
-		// }
+		if DEBUG {
+			// print("Time:", time.Since(engine.start))
+			print("MTD Move:", new_move, "Eval:", new_eval, "Depth:", max_depth)
+		}
 
 		if new_eval >= CHECKMATE_VALUE/10 {
 			break
@@ -136,7 +147,74 @@ func (engine *engine_version_3_0) iterative_deepening(position *chess.Position, 
 	}
 }
 
-func (engine *engine_version_3_0) minimax_start(position *chess.Position, turn bool, alpha int, beta int, hash_history []uint64, max_depth int) (eval int, move *chess.Move) {
+func (engine *engine_version_3_1) mtd_f(position *chess.Position, g int, max_depth int, eval_chan chan int, move_chan chan *chess.Move, quit_chan chan bool) {
+	mtd_f_iter := 0
+	eval := g
+	upper := CHECKMATE_VALUE
+	lower := -CHECKMATE_VALUE
+	var move *chess.Move = nil
+	var new_move *chess.Move = nil
+	for lower < upper-MTD_EVAL_CUTOFF {
+		if engine.time_up() || (len(quit_chan) > 0 && <-quit_chan) {
+			eval_chan <- eval
+			move_chan <- move
+			quit_chan <- true
+			return
+		}
+		beta := Max(eval, lower+1)
+		eval, new_move = engine.minimax_start(position, position.Turn() == chess.White, beta-1, beta, engine.zobristHistory[:], max_depth)
+		if new_move != nil {
+			move = new_move
+		}
+		if eval < beta {
+			upper = eval
+		} else {
+			lower = eval
+		}
+		mtd_f_iter++
+	}
+	if DEBUG {
+		print("MTD(f) Iterations:", mtd_f_iter)
+	}
+	eval_chan <- eval
+	move_chan <- move
+	quit_chan <- true
+}
+func (engine *engine_version_3_1) mtd_bi(position *chess.Position, max_depth int, eval_chan chan int, move_chan chan *chess.Move, quit_chan chan bool) {
+	mtd_bi_iter := 0
+	eval := 0
+	upper := CHECKMATE_VALUE
+	lower := -CHECKMATE_VALUE
+	var move *chess.Move = nil
+	var new_move *chess.Move = nil
+	for lower < upper-MTD_EVAL_CUTOFF {
+		if engine.time_up() || (len(quit_chan) > 0 && <-quit_chan) {
+			eval_chan <- eval
+			move_chan <- move
+			quit_chan <- true
+			return
+		}
+		beta := (lower + upper + 1) / 2
+		eval, new_move = engine.minimax_start(position, position.Turn() == chess.White, beta-1, beta, engine.zobristHistory[:], max_depth)
+		if new_move != nil {
+			move = new_move
+		}
+		if eval < beta {
+			upper = eval
+		} else {
+			lower = eval
+		}
+		mtd_bi_iter++
+	}
+	if DEBUG {
+		print("MTD(bi) Iterations:", mtd_bi_iter)
+	}
+	eval_chan <- eval
+	move_chan <- move
+	quit_chan <- true
+}
+
+func (engine *engine_version_3_1) minimax_start(position *chess.Position, turn bool, alpha int, beta int, hash_history []uint64, max_depth int) (eval int, move *chess.Move) {
 	states++
 
 	var hash uint64 = Zobrist.GenHash(position)
@@ -200,7 +278,7 @@ func (engine *engine_version_3_0) minimax_start(position *chess.Position, turn b
 	return best_eval, best_move
 }
 
-func (engine *engine_version_3_0) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int, hash_history []uint64, max_depth int) (eval int) {
+func (engine *engine_version_3_1) minimax(position *chess.Position, ply int, turn bool, alpha int, beta int, hash_history []uint64, max_depth int) (eval int) {
 	states++
 
 	if engine.time_up() {
@@ -271,7 +349,7 @@ func (engine *engine_version_3_0) minimax(position *chess.Position, ply int, tur
 	return best_eval
 }
 
-func (engine *engine_version_3_0) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int, max_depth int) (eval int) {
+func (engine *engine_version_3_1) q_search(position *chess.Position, ply int, turn bool, alpha int, beta int, max_depth int) (eval int) {
 	q_states++
 
 	start_eval := eval_v5(position, ply) * getMultiplier(turn)
@@ -308,7 +386,7 @@ func (engine *engine_version_3_0) q_search(position *chess.Position, ply int, tu
 	return alpha
 }
 
-func (engine *engine_version_3_0) Is_Draw_By_Repetition_Local(hash uint64, hash_history []uint64) bool {
+func (engine *engine_version_3_1) Is_Draw_By_Repetition_Local(hash uint64, hash_history []uint64) bool {
 	for i := 0; i < len(hash_history); i++ {
 		if hash_history[i] == 0 {
 			return false
