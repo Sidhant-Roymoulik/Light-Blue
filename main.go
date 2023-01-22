@@ -1,8 +1,6 @@
 package main
 
-import (
-	"runtime"
-)
+import "runtime"
 
 func main() {
 	print("Running main...")
@@ -18,20 +16,20 @@ func main() {
 	print("Initialization complete.")
 	print()
 
-	// test_play_self()
-	test_play_human()
+	test_play_self()
+	// test_play_human()
 }
 
 func test_play_self() {
 	game := game_from_opening("Sicilian Defense")
-	engine_1 := new_engine_version_2_3()
-	engine_2 := new_engine_version_3_1()
+	engine_1 := new_engine_version_3_1()
+	engine_2 := new_engine_version_4_0()
 	play_self(&engine_1, &engine_2, game)
 }
 
 func test_play_human() {
-	game := game_from_opening("Start Position")
-	engine_1 := new_engine_version_3_1()
+	game := game_from_opening("Sicilian Defense")
+	engine_1 := new_engine_version_2_3()
 	engine_2 := new_engine_human()
 	play_human(&engine_1, &engine_2, game)
 }

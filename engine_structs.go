@@ -31,7 +31,7 @@ type Engine interface {
 	Add_Zobrist_History(hash uint64)
 	Remove_Zobrist_History()
 	Is_Draw_By_Repetition(hash uint64) bool
-	reset(position *chess.Position)
+	reset()
 }
 
 type EngineUpgrades struct {
@@ -45,6 +45,7 @@ type EngineUpgrades struct {
 	mtd                 bool
 	killer_moves        bool
 	lazy_smp            bool
+	pvs                 bool
 }
 
 type Result struct {
@@ -81,7 +82,7 @@ func (engine *EngineClass) Is_Draw_By_Repetition(hash uint64) bool {
 	return false
 }
 
-func (engine *EngineClass) reset(position *chess.Position) {
+func (engine *EngineClass) reset() {
 	engine.max_ply = 0
 	engine.time_limit = TIME_LIMIT
 	engine.tt = TransTable[SearchEntry]{}
@@ -96,6 +97,4 @@ func (engine *EngineClass) reset(position *chess.Position) {
 
 	engine.tt.Clear()
 	engine.tt.Resize(64, 16)
-
-	engine.zobristHistory[0] = Zobrist.GenHash(position)
 }

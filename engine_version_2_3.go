@@ -85,7 +85,7 @@ func (engine *engine_version_2_3) iterative_deepening(position *chess.Position) 
 		<-move_chan
 
 		if DEBUG {
-			// print("Time:", time.Since(engine.start))
+			print("Time:", time.Since(engine.start))
 			print("Best Move:", best_move, "Eval:", best_eval, "Depth:", engine.max_ply)
 		}
 

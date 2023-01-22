@@ -91,11 +91,10 @@ func (engine *engine_version_3_1) lazy_smp(position *chess.Position) (best_eval 
 		if result.depth > best_depth {
 			best_eval, best_move = result.eval, result.move
 			best_depth = result.depth
+			if DEBUG {
+				print("Lazy Move:", result.move, "Eval:", result.eval, "Depth:", result.depth)
+			}
 		}
-		if DEBUG {
-
-		}
-		print("Lazy Move:", result.move, "Eval:", result.eval, "Depth:", result.depth)
 		result = <-result_chan
 	}
 	engine.max_ply = best_depth
@@ -133,7 +132,7 @@ func (engine *engine_version_3_1) iterative_deepening(position *chess.Position, 
 
 		if DEBUG {
 			// print("Time:", time.Since(engine.start))
-			print("MTD Move:", new_move, "Eval:", new_eval, "Depth:", max_depth)
+			// print("MTD Move:", new_move, "Eval:", new_eval, "Depth:", max_depth)
 		}
 
 		if new_eval >= CHECKMATE_VALUE/10 {
@@ -174,7 +173,7 @@ func (engine *engine_version_3_1) mtd_f(position *chess.Position, g int, max_dep
 		mtd_f_iter++
 	}
 	if DEBUG {
-		print("MTD(f) Iterations:", mtd_f_iter)
+		// print("MTD(f) Iterations:", mtd_f_iter)
 	}
 	eval_chan <- eval
 	move_chan <- move
@@ -207,7 +206,7 @@ func (engine *engine_version_3_1) mtd_bi(position *chess.Position, max_depth int
 		mtd_bi_iter++
 	}
 	if DEBUG {
-		print("MTD(bi) Iterations:", mtd_bi_iter)
+		// print("MTD(bi) Iterations:", mtd_bi_iter)
 	}
 	eval_chan <- eval
 	move_chan <- move
