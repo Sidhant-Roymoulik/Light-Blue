@@ -6,26 +6,37 @@ A Chess Engine Built in Golang
 ### Basic Requirements
 
  - [x] DFS
- - [x] Piece Square Tables
- - [x] Move Ordering
  - [x] Alpha-Beta Pruning
+
+### S-Tier Upgrades
+
+ - [x] Piece Square Tables
  - [x] Quiescence Search
- - [x] Iterative Deepening
  - [x] Transposition/Hash Tables
+ - [ ] UCI Protocol
 
-### Advanced Requirements
+### A-Tier Upgrades
 
+ - [x] Iterative Deepening
  - [x] Move Picking
- - [x] MTD(f) & MTD(bi)
+ - [x] Principal-Variation + Null-Window Search
+ - [ ] Null Move Pruning
+ - [ ] Time Management
+
+### B-Tier Upgrades
+
  - [x] Lazy SMP (Parrallelize Engine using Golang)
-
-### Additional Optimizations
-
+ - [ ] Reverse Futility Pruning
+ - [ ] Singular Extensions
  - [ ] Openings
  - [ ] Tablebases
- - [x] Killer Moves Heuristic
  - [ ] Razoring
- - [ ] Monte-Carlo Tree Search
+
+### C-Tier Upgrades
+
+ - [x] MTD(f) & MTD(bi)
+ - [x] Killer Moves Heuristic
+ - [ ] Anything Else I Can Think Of
 
 ---
 
