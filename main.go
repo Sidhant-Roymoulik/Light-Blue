@@ -22,8 +22,8 @@ func main() {
 
 func test_play_self() {
 	game := game_from_opening("Sicilian Defense")
-	engine_1 := new_engine_version_3_1()
-	engine_2 := new_engine_version_4_0()
+	engine_1 := new_engine_version_4_0()
+	engine_2 := new_engine_version_4_1()
 	play_self(&engine_1, &engine_2, game)
 }
 

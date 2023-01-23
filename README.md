@@ -26,11 +26,11 @@ A Chess Engine Built in Golang
 ### B-Tier Upgrades
 
  - [x] Lazy SMP (Parrallelize Engine using Golang)
+ - [ ] Razoring
  - [ ] Reverse Futility Pruning
  - [ ] Singular Extensions
  - [ ] Openings
  - [ ] Tablebases
- - [ ] Razoring
 
 ### C-Tier Upgrades
 
