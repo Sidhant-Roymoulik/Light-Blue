@@ -104,14 +104,15 @@ func (engine *engine_version_4_0) iterative_deepening(position *chess.Position) 
 func (engine *engine_version_4_0) minimax_start(position *chess.Position, alpha int, beta int, max_depth int, hash_history []uint64) (eval int, move *chess.Move) {
 	states++
 
-	// Check for usable entry in transposition table
+	// Generate hash for position
 	var hash uint64 = Zobrist.GenHash(position)
-	var entry *SearchEntry = engine.tt.Probe(hash)
-	var tt_eval, should_use, tt_move = entry.Get(hash, 0, max_depth, -math.MaxInt, math.MaxInt)
-	if should_use {
-		hash_hits++
-		return tt_eval, tt_move
-	}
+
+	// var entry *SearchEntry = engine.tt.Probe(hash)
+	// var tt_eval, should_use, tt_move = entry.Get(hash, 0, max_depth, -math.MaxInt, math.MaxInt)
+	// if should_use {
+	// 	hash_hits++
+	// 	return tt_eval, tt_move
+	// }
 
 	// Sort Moves
 	moves := score_moves_v3(position.ValidMoves(), position.Board(), engine.killer_moves[0])
