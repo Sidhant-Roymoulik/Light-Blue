@@ -27,9 +27,9 @@ type Option struct {
 func NewUCIEngine(name string) *UCIEngine {
 	reader := bufio.NewReader(os.Stdin)
 	writer := bufio.NewWriter(os.Stdout)
-	engine := new_engine_version_3_1()
+	engine := new_light_blue_1_0()
 	options := make(map[string]Option)
-	return &UCIEngine{reader, writer, name + " " + engine.getName(), &engine, options}
+	return &UCIEngine{reader, writer, engine.getName(), &engine, options}
 }
 
 func (e *UCIEngine) AddOption(name string, typ string, defaultValue string, minValue string, maxValue string) {
@@ -128,7 +128,7 @@ func (e *UCIEngine) Position(args []string) {
 		return
 	}
 	var position = game_from_fen(fen).Position()
-	e.engine.Add_Zobrist_History(Zobrist.GenHash(position))
+	// e.engine.Add_Zobrist_History(Zobrist.GenHash(position))
 	if movesIndex >= 0 && movesIndex+1 < len(args) {
 		for _, smove := range args[movesIndex+1:] {
 			move, err := chess.AlgebraicNotation{}.Decode(position, smove)
