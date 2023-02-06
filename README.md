@@ -3,6 +3,8 @@ A Chess Engine Built in Golang
 
 ---
 
+## Current Version Upgrades
+
 ### Basic Requirements
 
  - [x] DFS
@@ -20,12 +22,13 @@ A Chess Engine Built in Golang
  - [x] Iterative Deepening
  - [x] Move Picking
  - [x] Principal-Variation + Null-Window Search
+ - [x] Aspiration Window
  - [ ] Null Move Pruning
  - [ ] Time Management
 
 ### B-Tier Upgrades
 
- - [x] Lazy SMP (Parrallelize Engine using Golang)
+ - [ ] Lazy SMP (Parrallelize Engine using Golang)
  - [ ] Razoring
  - [ ] Reverse Futility Pruning
  - [ ] Singular Extensions
@@ -34,7 +37,7 @@ A Chess Engine Built in Golang
 
 ### C-Tier Upgrades
 
- - [x] MTD(f) & MTD(bi)
+ - [ ] MTD(f) & MTD(bi)
  - [x] Killer Moves Heuristic
  - [ ] Anything Else I Can Think Of
 
@@ -44,7 +47,13 @@ Challenged by Will Depue ([0hq](https://github.com/0hq)).
 
 Check out his [Tutorial](https://www.chessengines.org/) and [Starter Code](https://github.com/0hq/starter_chess_engine) for Javascript and his [Engine in Golang](https://github.com/0hq/antikythera/tree/main).
 
-Check out this [thesis](https://www.duo.uio.no/bitstream/handle/10852/53769/1/master.pdf) which covers all lot of the topics well.
+---
+
+### Resources
+
+[Chessprogramming wiki](https://www.chessprogramming.org/Main_Page) is the chess engine dev's Library of Alexandria. Definitely go check it out.
+
+This [thesis](https://www.duo.uio.no/bitstream/handle/10852/53769/1/master.pdf) covers some of the topics well, especially Lazy SMP.
 
 ---
 
