@@ -9,23 +9,24 @@ import (
 )
 
 type EngineClass struct {
-	name              string
-	author            string
-	max_ply           int
-	max_q_ply         int
-	start             time.Time
-	time_limit        time.Duration
-	counters          EngineCounters
-	upgrades          EngineUpgrades
-	tt                TransTable[SearchEntry]
-	age               uint8        // this is used to age off entries in the transposition table, in the form of a half move clock
-	zobristHistory    [1024]uint64 // draw detection history
-	zobristHistoryPly uint16       // draw detection ply
-	prev_guess        int          // used to decide between mtd(f) and mtd(bi)
-	use_mtd_f         bool
-	quit_mtd          bool
-	killer_moves      [100][2]*chess.Move
-	threads           int
+	name                 string
+	author               string
+	max_ply              int
+	max_q_ply            int
+	start                time.Time
+	time_limit           time.Duration
+	counters             EngineCounters
+	upgrades             EngineUpgrades
+	tt                   TransTable[SearchEntry]
+	age                  uint8        // this is used to age off entries in the transposition table, in the form of a half move clock
+	zobristHistory       [1024]uint64 // draw detection history
+	zobristHistoryPly    uint16       // draw detection ply
+	prev_guess           int          // Used in MTD(f)
+	use_mtd_f            bool
+	quit_mtd             bool
+	killer_moves         [100][2]*chess.Move
+	threads              int
+	quit_search_at_depth [100]bool
 }
 
 type Engine interface {
@@ -42,6 +43,7 @@ type Engine interface {
 	Is_Draw_By_Repetition(uint64) bool
 	resetCounters()
 	resetKillerMoves()
+	resetZobrist()
 	reset()
 	run(*chess.Position) (int, *chess.Move)
 }
@@ -58,6 +60,7 @@ type EngineUpgrades struct {
 	killer_moves        bool
 	lazy_smp            bool
 	pvs                 bool
+	aspiration_window   bool
 }
 
 type EngineCounters struct {
@@ -84,7 +87,7 @@ func (engine *EngineClass) getAuthor() string {
 }
 
 func (engine *EngineClass) getDepth() string {
-	return fmt.Sprint(engine.max_ply, "/", engine.max_q_ply)
+	return fmt.Sprint(engine.max_ply)
 }
 
 func (engine *EngineClass) getNodesSearched() int {
@@ -101,8 +104,15 @@ func (engine *EngineClass) getHashesUsed() int {
 
 func (engine *EngineClass) setBenchmarkMode(ply int) {
 	// engine.upgrades.lazy_smp = false
-	// engine.upgrades.iterative_deepening = false
+	engine.upgrades.iterative_deepening = false
 	engine.max_ply = ply
+}
+
+func (engine *EngineClass) addKillerMove(move *chess.Move, ply int) {
+	if !move.HasTag(chess.Capture) && move != engine.killer_moves[ply][0] {
+		engine.killer_moves[ply][1] = engine.killer_moves[ply][0]
+		engine.killer_moves[ply][0] = move
+	}
 }
 
 func (engine *EngineClass) time_up() bool {
@@ -111,8 +121,8 @@ func (engine *EngineClass) time_up() bool {
 
 // adds to zobrist history, which is used for draw detection
 func (engine *EngineClass) Add_Zobrist_History(hash uint64) {
-	engine.zobristHistory[engine.zobristHistoryPly] = hash
 	engine.zobristHistoryPly++
+	engine.zobristHistory[engine.zobristHistoryPly] = hash
 }
 
 // decrements ply counter, which means history will be overwritten
@@ -142,20 +152,23 @@ func (engine *EngineClass) resetKillerMoves() {
 	}
 }
 
+func (engine *EngineClass) resetZobrist() {
+	engine.zobristHistory = [1024]uint64{}
+	engine.zobristHistoryPly = 0
+	engine.tt.Clear()
+	engine.tt.Resize(64, 16)
+}
+
 func (engine *EngineClass) reset() {
 	engine.max_ply = 0
 	engine.time_limit = TIME_LIMIT
 	engine.resetCounters()
 	engine.tt = TransTable[SearchEntry]{}
 	engine.age = 0
-	engine.zobristHistory = [1024]uint64{}
-	engine.zobristHistoryPly = 0
 	engine.prev_guess = 0
 	engine.use_mtd_f = false
 	engine.quit_mtd = false
 	engine.resetKillerMoves()
 	engine.threads = runtime.GOMAXPROCS(0)
-
-	engine.tt.Clear()
-	engine.tt.Resize(64, 16)
+	engine.resetZobrist()
 }

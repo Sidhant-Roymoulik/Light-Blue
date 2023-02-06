@@ -10,6 +10,7 @@ import (
 
 func benchmark(ply int, engine Engine, pos *chess.Position) float64 {
 	engine.setBenchmarkMode(ply)
+	engine.resetZobrist()
 
 	print("BEGIN BENCHMARKING -", engine.getName())
 	// print("Starting at time", time.Now())
@@ -40,7 +41,6 @@ func benchmark(ply int, engine Engine, pos *chess.Position) float64 {
 }
 
 func benchmark_range(plymin int, plymax int, engine Engine, pos *chess.Position) {
-	engine.reset()
 	for i := plymin; i <= plymax; i++ {
 		benchmark(i, engine, pos)
 	}
@@ -48,6 +48,7 @@ func benchmark_range(plymin int, plymax int, engine Engine, pos *chess.Position)
 
 func benchmark_engines(engines []Engine, pos *chess.Position) {
 	for _, engine := range engines {
-		benchmark_range(1, 1, engine, pos)
+		engine.reset()
+		benchmark_range(1, 5, engine, pos)
 	}
 }

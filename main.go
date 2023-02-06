@@ -18,16 +18,16 @@ func main() {
 	print("Initialization complete.")
 	print()
 
-	// test_play_self()
+	test_play_self()
 	// test_play_human()
 
-	test_benchmark()
+	// test_benchmark()
 }
 
 func test_play_self() {
-	game := game_from_opening("Italian Game")
-	engine_1 := new_engine_version_4_0()
-	engine_2 := new_engine_version_4_0()
+	game := game_from_opening("Sicilian Game")
+	engine_1 := new_light_blue_1_0()
+	engine_2 := new_light_blue_1_0()
 	play_self(&engine_1, &engine_2, game)
 }
 
