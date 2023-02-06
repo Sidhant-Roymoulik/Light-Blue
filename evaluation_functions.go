@@ -12,7 +12,7 @@ import (
 const pawn int = 100
 const knight int = 320
 const bishop int = 330
-const rook int = 500
+const rook int = 525
 const queen int = 900
 const king int = 20000
 

@@ -25,7 +25,7 @@ func main() {
 }
 
 func test_play_self() {
-	game := game_from_opening("Sicilian Game")
+	game := game_from_opening("Sicilian Defense")
 	engine_1 := new_light_blue_1_0()
 	engine_2 := new_light_blue_1_0()
 	play_self(&engine_1, &engine_2, game)

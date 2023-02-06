@@ -72,16 +72,7 @@ func (engine *light_blue_1_0) run(position *chess.Position) (best_eval int, best
 func (engine *light_blue_1_0) iterative_deepening(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	engine.start = time.Now()
 	engine.age ^= 1
-	max_depth := 1
-
-	best_eval, best_move = engine.minimax_start(position, -math.MaxInt, math.MaxInt, max_depth)
-	engine.prev_guess = best_eval
-	engine.max_ply = max_depth
-
-	if DEBUG {
-		print("Time:", time.Since(engine.start))
-		print("Best Move:", best_move, "Eval:", best_eval, "Depth:", max_depth)
-	}
+	max_depth := 0
 
 	for {
 		max_depth += 1
@@ -111,12 +102,35 @@ func (engine *light_blue_1_0) iterative_deepening(position *chess.Position) (bes
 }
 
 func (engine *light_blue_1_0) aspiration_window(position *chess.Position, max_depth int) (eval int, move *chess.Move) {
-	var alpha int = engine.prev_guess - WINDOW_VALUE
-	var beta int = engine.prev_guess + WINDOW_VALUE
+
+	if max_depth == 1 {
+		eval, move = engine.minimax_start(position, -math.MaxInt, math.MaxInt, max_depth)
+		return eval, move
+	}
+
+	var alpha int = engine.prev_guess - WINDOW_VALUE_TIGHT
+	var beta int = engine.prev_guess + WINDOW_VALUE_TIGHT
 
 	eval, move = engine.minimax_start(position, alpha, beta, max_depth)
+
+	if eval <= alpha {
+		if DEBUG {
+			print("Aspiration tight no work :(")
+		}
+		alpha = engine.prev_guess - WINDOW_VALUE
+		eval, move = engine.minimax_start(position, alpha, beta, max_depth)
+	} else if eval >= beta {
+		if DEBUG {
+			print("Aspiration tight no work :(")
+		}
+		beta = engine.prev_guess + WINDOW_VALUE
+		eval, move = engine.minimax_start(position, alpha, beta, max_depth)
+	}
+
 	if eval <= alpha || eval >= beta {
-		print("Aspiration no work :(")
+		if DEBUG {
+			print("Aspiration no work :(")
+		}
 		eval, move = engine.minimax_start(position, -math.MaxInt, math.MaxInt, max_depth)
 	}
 

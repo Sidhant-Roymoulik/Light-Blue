@@ -155,8 +155,6 @@ func (engine *EngineClass) resetKillerMoves() {
 func (engine *EngineClass) resetZobrist() {
 	engine.zobristHistory = [1024]uint64{}
 	engine.zobristHistoryPly = 0
-	engine.tt.Clear()
-	engine.tt.Resize(64, 16)
 }
 
 func (engine *EngineClass) reset() {
@@ -171,4 +169,7 @@ func (engine *EngineClass) reset() {
 	engine.resetKillerMoves()
 	engine.threads = runtime.GOMAXPROCS(0)
 	engine.resetZobrist()
+
+	engine.tt.Clear()
+	engine.tt.Resize(64, 16)
 }

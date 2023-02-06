@@ -27,7 +27,8 @@ const MAX_CONST_DEPTH int = 2
 const CHECKMATE_VALUE int = 1000000
 const MTD_ITER_CUTOFF int = 14
 const MTD_EVAL_CUTOFF int = 0
-const WINDOW_VALUE int = 50
+const WINDOW_VALUE_TIGHT int = 30
+const WINDOW_VALUE int = 100
 const R int = 2
 
 // -----------------------------------------------------------------------------
