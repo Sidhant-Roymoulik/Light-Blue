@@ -25,6 +25,7 @@ var CHESS_OPENINGS map[string][]string = map[string][]string{
 const TIME_LIMIT time.Duration = 10 * 1000000000 // Time in nanosec
 const MAX_CONST_DEPTH int = 2
 const CHECKMATE_VALUE int = 1000000
+const MATE_CUTOFF int = CHECKMATE_VALUE / 2
 const MTD_ITER_CUTOFF int = 14
 const MTD_EVAL_CUTOFF int = 0
 const WINDOW_VALUE_TIGHT int = 30

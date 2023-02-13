@@ -80,7 +80,7 @@ func (engine *engine_version_1_2) minimax_start(position *chess.Position, turn b
 		return tt_eval, tt_move
 	}
 
-	moves := score_moves(position.ValidMoves(), position.Board())
+	moves := score_moves_v1(position.ValidMoves(), position.Board())
 
 	best_eval = math.MaxInt * -1
 	best_move = moves[0].move
@@ -143,7 +143,7 @@ func (engine *engine_version_1_2) minimax(position *chess.Position, ply int, tur
 	var best_move *chess.Move = nil
 	var tt_flag = AlphaFlag
 
-	moves := score_moves(position.ValidMoves(), position.Board())
+	moves := score_moves_v1(position.ValidMoves(), position.Board())
 
 	for i := 0; i < len(moves); i++ {
 		move := get_move_v2(moves, i)
@@ -199,7 +199,7 @@ func (engine *engine_version_1_2) q_search(position *chess.Position, ply int, tu
 		return start_eval
 	}
 
-	moves := score_moves(get_q_moves(position), position.Board())
+	moves := score_moves_v1(get_q_moves(position), position.Board())
 
 	if len(moves) == 0 {
 		return start_eval

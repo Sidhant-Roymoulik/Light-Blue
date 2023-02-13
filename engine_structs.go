@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"time"
 
@@ -9,24 +10,24 @@ import (
 )
 
 type EngineClass struct {
-	name                 string
-	author               string
-	max_ply              int
-	max_q_ply            int
-	start                time.Time
-	time_limit           time.Duration
-	counters             EngineCounters
-	upgrades             EngineUpgrades
-	tt                   TransTable[SearchEntry]
-	age                  uint8        // this is used to age off entries in the transposition table, in the form of a half move clock
-	zobristHistory       [1024]uint64 // draw detection history
-	zobristHistoryPly    uint16       // draw detection ply
-	prev_guess           int          // Used in MTD(f)
-	use_mtd_f            bool
-	quit_mtd             bool
-	killer_moves         [100][2]*chess.Move
-	threads              int
-	quit_search_at_depth [100]bool
+	name              string
+	author            string
+	max_ply           int
+	max_q_ply         int
+	start             time.Time
+	time_limit        time.Duration
+	counters          EngineCounters
+	upgrades          EngineUpgrades
+	tt                TransTable[SearchEntry]
+	age               uint8        // this is used to age off entries in the transposition table, in the form of a half move clock
+	zobristHistory    [1024]uint64 // draw detection history
+	zobristHistoryPly uint16       // draw detection ply
+	prev_guess        int          // Used in MTD(f) and aspiration window
+	use_mtd_f         bool
+	quit_mtd          bool
+	killer_moves      [100][2]*chess.Move
+	threads           int
+	mainline          [100]*chess.Move
 }
 
 type Engine interface {
@@ -36,7 +37,12 @@ type Engine interface {
 	getNodesSearched() int
 	getQNodesSearched() int
 	getHashesUsed() int
+	saveTTPosition(uint64, int, *chess.Move, int, int, uint8)
+	probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
 	setBenchmarkMode(int)
+	addKillerMove(*chess.Move, int)
+	setMainLine()
+	printMainLine()
 	time_up() bool
 	Add_Zobrist_History(uint64)
 	Remove_Zobrist_History()
@@ -67,6 +73,7 @@ type EngineCounters struct {
 	nodes_searched   int
 	q_nodes_searched int
 	hashes_used      int
+	hashes_written   int
 }
 
 type Result struct {
@@ -87,7 +94,7 @@ func (engine *EngineClass) getAuthor() string {
 }
 
 func (engine *EngineClass) getDepth() string {
-	return fmt.Sprint(engine.max_ply)
+	return fmt.Sprint(engine.max_ply) + "/" + fmt.Sprint(engine.max_q_ply)
 }
 
 func (engine *EngineClass) getNodesSearched() int {
@@ -102,17 +109,54 @@ func (engine *EngineClass) getHashesUsed() int {
 	return engine.counters.hashes_used
 }
 
+func (engine *EngineClass) saveTTPosition(hash uint64, score int, best *chess.Move, ply int, depth int, flag uint8) {
+	if !engine.time_up() && best != nil {
+		var entry *SearchEntry = engine.tt.Store(hash, depth, engine.age)
+		entry.Set(hash, score, best, ply, depth, flag, engine.age)
+		engine.counters.hashes_written++
+	}
+}
+
+func (engine *EngineClass) probeTTPosition(hash uint64, ply int, depth int, alpha int, beta int) (int, bool, *chess.Move) {
+	var entry *SearchEntry = engine.tt.Probe(hash)
+	var tt_eval, should_use, tt_move = entry.Get(hash, 0, depth, alpha, beta)
+	return tt_eval, should_use, tt_move
+}
+
 func (engine *EngineClass) setBenchmarkMode(ply int) {
-	// engine.upgrades.lazy_smp = false
 	engine.upgrades.iterative_deepening = false
 	engine.max_ply = ply
 }
 
 func (engine *EngineClass) addKillerMove(move *chess.Move, ply int) {
-	if !move.HasTag(chess.Capture) && move != engine.killer_moves[ply][0] {
+	if !move.HasTag(chess.Capture) && move.Promo() == chess.NoPieceType &&
+		move != engine.killer_moves[ply][0] {
 		engine.killer_moves[ply][1] = engine.killer_moves[ply][0]
 		engine.killer_moves[ply][0] = move
 	}
+}
+
+func (engine *EngineClass) setMainLine() {
+	engine.mainline = [100]*chess.Move{}
+
+	i := engine.zobristHistoryPly
+	cnt := 0
+	for {
+		if engine.zobristHistory[i+1] == 0 {
+			break
+		}
+		var _, _, tt_move = engine.probeTTPosition(engine.zobristHistory[i], 0, 0, -math.MaxInt, math.MaxInt)
+		engine.mainline[cnt] = tt_move
+		i++
+		cnt++
+	}
+}
+func (engine *EngineClass) printMainLine() {
+	fmt.Print(" pv")
+	for i := 0; i < engine.max_ply; i++ {
+		fmt.Print(" ", engine.mainline[i])
+	}
+	fmt.Println()
 }
 
 func (engine *EngineClass) time_up() bool {
@@ -164,8 +208,6 @@ func (engine *EngineClass) reset() {
 	engine.tt = TransTable[SearchEntry]{}
 	engine.age = 0
 	engine.prev_guess = 0
-	engine.use_mtd_f = false
-	engine.quit_mtd = false
 	engine.resetKillerMoves()
 	engine.threads = runtime.GOMAXPROCS(0)
 	engine.resetZobrist()

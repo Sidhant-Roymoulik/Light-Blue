@@ -23,9 +23,9 @@ func benchmark(ply int, engine Engine, pos *chess.Position) float64 {
 
 	// print("Complete at time", time.Now())
 	print("Best Move:", move.String())
-	if eval > 100000 {
+	if eval > MATE_CUTOFF {
 		print("Eval: Mate in", (CHECKMATE_VALUE-eval+1)/2)
-	} else if eval < -100000 {
+	} else if eval < -MATE_CUTOFF {
 		print("Eval: Mate in", (CHECKMATE_VALUE+eval+1)/2)
 	} else {
 		print("Eval:", float32(eval*getMultiplier(pos.Turn() == chess.White))/100.0)
@@ -49,6 +49,6 @@ func benchmark_range(plymin int, plymax int, engine Engine, pos *chess.Position)
 func benchmark_engines(engines []Engine, pos *chess.Position) {
 	for _, engine := range engines {
 		engine.reset()
-		benchmark_range(1, 5, engine, pos)
+		benchmark_range(1, 6, engine, pos)
 	}
 }

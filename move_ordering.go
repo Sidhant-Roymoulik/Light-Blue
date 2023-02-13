@@ -7,6 +7,17 @@ import (
 )
 
 // -----------------------------------------------------------------------------
+// 		Constants
+// -----------------------------------------------------------------------------
+
+const (
+	MvvLvaOffset          int = 1000 - 256
+	PVMoveScore           int = 65
+	FirstKillerMoveScore  int = 10
+	SecondKillerMoveScore int = 20
+)
+
+// -----------------------------------------------------------------------------
 // 		MVV-LVA Stuff
 // -----------------------------------------------------------------------------
 
@@ -151,7 +162,7 @@ type scored_move struct {
 	eval int
 }
 
-func score_moves(moves []*chess.Move, board *chess.Board) []scored_move {
+func score_moves_v1(moves []*chess.Move, board *chess.Board) []scored_move {
 	scores := make([]scored_move, len(moves))
 	for i := 0; i < len(moves); i++ {
 		scores[i] = scored_move{moves[i], eval_move_v2(moves[i], board)}
@@ -212,6 +223,43 @@ func score_moves_v3(moves []*chess.Move, board *chess.Board, killer_moves [2]*ch
 		}
 		if scores[i].eval > scores[0].eval { // Use first guaranteed iteration to sort first move
 			scores[i], scores[0] = scores[0], scores[i]
+		}
+	}
+	return scores
+}
+
+// -----------------------------------------------------------------------------
+// 		Best Move Picking
+// -----------------------------------------------------------------------------
+
+func get_move(moves []scored_move, start int) {
+	best_index := start
+	best_eval := moves[best_index].eval
+	for i := best_index; i < len(moves); i++ {
+		if moves[i].eval > best_eval {
+			best_index = i
+			best_eval = moves[i].eval
+		}
+	}
+	temp := moves[start]
+	moves[start] = moves[best_index]
+	moves[best_index] = temp
+}
+
+// Adding Killer Moves
+func score_moves(moves []*chess.Move, board *chess.Board, killer_moves [2]*chess.Move, pv_move *chess.Move) []scored_move {
+	scores := make([]scored_move, len(moves))
+	for i := 0; i < len(moves); i++ {
+		if pv_move != nil && moves[i].S1() == pv_move.S1() && moves[i].S2() == pv_move.S2() {
+			scores[i] = scored_move{moves[i], MvvLvaOffset + PVMoveScore}
+		} else if moves[i].HasTag(chess.Capture) {
+			scores[i] = scored_move{moves[i], MvvLvaOffset + MVV_LVA(moves[i], board)}
+		} else if moves[i] == killer_moves[0] {
+			scores[i] = scored_move{moves[i], MvvLvaOffset - FirstKillerMoveScore}
+		} else if moves[i] == killer_moves[1] {
+			scores[i] = scored_move{moves[i], MvvLvaOffset - SecondKillerMoveScore}
+		} else {
+			scores[i] = scored_move{moves[i], 0}
 		}
 	}
 	return scores
