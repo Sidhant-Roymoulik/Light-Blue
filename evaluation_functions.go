@@ -183,6 +183,17 @@ var PST_EG = map[chess.PieceType][]int{
 var BishopPairBonusMG int = 22
 var BishopPairBonusEG int = 30
 
+var RookOrQueenOnSeventhBonusMG int = 30
+var RookOrQueenOnSeventhBonusEG int = 23
+
+var RookOnOpenFileBonusMG int = 23
+
+var IsolatedPawnPenatlyMG int = 17
+var IsolatedPawnPenatlyEG int = 6
+
+var DoubledPawnPenatlyMG int = 1
+var DoubledPawnPenatlyEG int = 16
+
 // -----------------------------------------------------------------------------
 // 		Tapered Evaluation Values
 // -----------------------------------------------------------------------------
@@ -362,10 +373,12 @@ func eval_v5(position *chess.Position, ply int) int {
 	for square, piece := range squares {
 		if piece.Color() == chess.White {
 			OCC_WHITE[piece.Type()]++
+
 			delta_mg += PVM[piece.Type()] + PST_MG[piece.Type()][FLIP[square]]
 			delta_eg += PVM_EG[piece.Type()] + PST_EG[piece.Type()][FLIP[square]]
 		} else {
 			OCC_BLACK[piece.Type()]++
+
 			delta_mg -= PVM[piece.Type()] + PST_MG[piece.Type()][square]
 			delta_eg -= PVM_EG[piece.Type()] + PST_EG[piece.Type()][square]
 		}
@@ -395,9 +408,219 @@ func eval_v5(position *chess.Position, ply int) int {
 		delta += len(position.ValidMoves())
 		delta -= len(position.NullMove().ValidMoves())
 	} else {
-		delta += len(position.NullMove().ValidMoves())
 		delta -= len(position.ValidMoves())
+		delta += len(position.NullMove().ValidMoves())
 	}
+
+	return delta
+}
+
+// Best Evaluation
+func eval_pos(position *chess.Position, ply int) int {
+	// faster than doing two comparisons
+	if position.Status() != chess.NoMethod {
+		if position.Status() == chess.Checkmate {
+			if position.Turn() == chess.White {
+				return -CHECKMATE_VALUE + ply
+			} else {
+				return CHECKMATE_VALUE - ply
+			}
+		}
+		return 0
+	}
+
+	var OCC map[chess.Color]map[chess.PieceType]int = map[chess.Color]map[chess.PieceType]int{
+		chess.White: {
+			chess.King:   0,
+			chess.Queen:  0,
+			chess.Rook:   0,
+			chess.Bishop: 0,
+			chess.Knight: 0,
+			chess.Pawn:   0,
+		},
+		chess.Black: {
+			chess.King:   0,
+			chess.Queen:  0,
+			chess.Rook:   0,
+			chess.Bishop: 0,
+			chess.Knight: 0,
+			chess.Pawn:   0,
+		},
+	}
+
+	var P_FILE map[chess.Color]map[chess.File]int = map[chess.Color]map[chess.File]int{
+		chess.White: {
+			chess.FileA: 0,
+			chess.FileB: 0,
+			chess.FileC: 0,
+			chess.FileD: 0,
+			chess.FileE: 0,
+			chess.FileF: 0,
+			chess.FileG: 0,
+			chess.FileH: 0,
+		},
+		chess.Black: {
+			chess.FileA: 0,
+			chess.FileB: 0,
+			chess.FileC: 0,
+			chess.FileD: 0,
+			chess.FileE: 0,
+			chess.FileF: 0,
+			chess.FileG: 0,
+			chess.FileH: 0,
+		},
+	}
+
+	squares := position.Board().SquareMap()
+	for square, piece := range squares {
+		OCC[piece.Color()][piece.Type()]++
+
+		if piece.Type() == chess.Pawn {
+			P_FILE[piece.Color()][square.File()]++
+		}
+	}
+
+	var white_knights int = OCC[chess.White][chess.Knight]
+	var white_bishops int = OCC[chess.White][chess.Bishop]
+	var black_knights int = OCC[chess.Black][chess.Knight]
+	var black_bishops int = OCC[chess.Black][chess.Bishop]
+
+	var pawns int = OCC[chess.White][chess.Pawn] + OCC[chess.Black][chess.Pawn]
+	var knights int = white_knights + black_knights
+	var bishops int = white_bishops + black_bishops
+	var rooks int = OCC[chess.White][chess.Rook] + OCC[chess.Black][chess.Rook]
+	var queens int = OCC[chess.White][chess.Queen] + OCC[chess.Black][chess.Queen]
+
+	var majors int = queens + rooks
+	var minors int = bishops + knights
+
+	// Draw by Insufficient Material
+	if pawns+majors+minors == 0 {
+		return 0
+	} else if majors+pawns == 0 {
+		if minors == 1 {
+			return 0
+		} else if minors == 2 {
+			if white_knights == 1 && black_knights == 1 {
+				return 0
+			} else if white_bishops == 1 && black_bishops == 1 {
+				return 0
+			}
+		}
+	}
+
+	var turn chess.Color = position.Turn()
+	var other_turn chess.Color = position.NullMove().Turn()
+
+	var score_mg map[chess.Color]int = map[chess.Color]int{
+		chess.White: 0,
+		chess.Black: 0,
+	}
+	var score_eg map[chess.Color]int = map[chess.Color]int{
+		chess.White: 0,
+		chess.Black: 0,
+	}
+
+	if OCC[chess.White][chess.Bishop] == 2 {
+		score_mg[chess.White] += BishopPairBonusMG
+		score_eg[chess.White] += BishopPairBonusEG
+	}
+	if OCC[chess.Black][chess.Bishop] == 2 {
+		score_mg[chess.Black] += BishopPairBonusMG
+		score_eg[chess.Black] += BishopPairBonusEG
+	}
+
+	score_mg[turn] += len(position.ValidMoves())
+	score_eg[turn] += len(position.ValidMoves())
+	score_mg[other_turn] += len(position.NullMove().ValidMoves())
+	score_eg[other_turn] += len(position.NullMove().ValidMoves())
+
+	for square, piece := range squares {
+		if piece.Color() == chess.White {
+			score_mg[chess.White] += PVM[piece.Type()] +
+				PST_MG[piece.Type()][FLIP[square]]
+			score_eg[chess.White] += PVM_EG[piece.Type()] +
+				PST_EG[piece.Type()][FLIP[square]]
+
+			if piece.Type() == chess.Queen {
+				if square.Rank() == chess.Rank7 {
+					score_mg[chess.White] += RookOrQueenOnSeventhBonusMG
+					score_eg[chess.White] += RookOrQueenOnSeventhBonusEG
+				}
+			}
+
+			if piece.Type() == chess.Rook {
+				if square.Rank() == chess.Rank7 {
+					score_mg[chess.White] += RookOrQueenOnSeventhBonusMG
+					score_eg[chess.White] += RookOrQueenOnSeventhBonusEG
+				}
+
+				if P_FILE[chess.White][square.File()] == 0 &&
+					P_FILE[chess.Black][square.File()] == 0 {
+					score_mg[chess.White] += RookOnOpenFileBonusMG
+				}
+			}
+		} else {
+			score_mg[chess.Black] += PVM[piece.Type()] +
+				PST_MG[piece.Type()][square]
+			score_eg[chess.Black] += PVM_EG[piece.Type()] +
+				PST_EG[piece.Type()][square]
+
+			if piece.Type() == chess.Queen {
+				if square.Rank() == chess.Rank2 {
+					score_mg[chess.Black] += RookOrQueenOnSeventhBonusMG
+					score_eg[chess.Black] += RookOrQueenOnSeventhBonusEG
+				}
+			}
+
+			if piece.Type() == chess.Rook {
+				if square.Rank() == chess.Rank2 {
+					score_mg[chess.Black] += RookOrQueenOnSeventhBonusMG
+					score_eg[chess.Black] += RookOrQueenOnSeventhBonusEG
+				}
+
+				if P_FILE[chess.White][square.File()] == 0 &&
+					P_FILE[chess.Black][square.File()] == 0 {
+					score_mg[chess.Black] += RookOnOpenFileBonusMG
+				}
+			}
+		}
+
+		if piece.Type() == chess.Pawn {
+			if P_FILE[piece.Color()][square.File()] > 1 {
+				score_mg[piece.Color()] -= DoubledPawnPenatlyMG
+				score_eg[piece.Color()] -= DoubledPawnPenatlyEG
+			}
+
+			var isIsolated bool = true
+			if square.File() > chess.FileA &&
+				P_FILE[piece.Color()][square.File()-1] > 0 {
+				isIsolated = false
+			}
+			if square.File() < chess.FileH &&
+				P_FILE[piece.Color()][square.File()+1] > 0 {
+				isIsolated = false
+			}
+			if isIsolated {
+				score_mg[piece.Color()] -= IsolatedPawnPenatlyMG
+				score_eg[piece.Color()] -= IsolatedPawnPenatlyEG
+			}
+		}
+	}
+
+	// Tapered Evaluation
+	var delta_mg int = score_mg[turn] - score_mg[other_turn]
+	var delta_eg int = score_eg[turn] - score_eg[other_turn]
+
+	var phase int = TotalPhase
+	phase -= pawns * PawnPhase
+	phase -= knights * KnightPhase
+	phase -= bishops * BishopPhase
+	phase -= rooks * RookPhase
+	phase -= queens * QueenPhase
+	phase = (phase*256 + (TotalPhase / 2)) / TotalPhase
+
+	var delta int = ((delta_mg * (256 - phase)) + (delta_eg * phase)) / 256
 
 	return delta
 }

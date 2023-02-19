@@ -250,7 +250,7 @@ func (engine *light_blue_1_0) pv_search(position *chess.Position, ply int, alpha
 
 	// If there are no moves, return the eval
 	if len(moves) == 0 {
-		return eval_v5(position, ply) * getMultiplier(position.Turn() == chess.White)
+		return eval_pos(position, ply)
 	}
 
 	// Initialize variables
@@ -325,7 +325,7 @@ func (engine *light_blue_1_0) q_search(position *chess.Position, ply int, alpha 
 		return 0
 	}
 
-	start_eval := eval_v5(position, ply) * getMultiplier(position.Turn() == chess.White)
+	start_eval := eval_pos(position, ply)
 
 	// Delta Pruning
 	if start_eval >= beta {
