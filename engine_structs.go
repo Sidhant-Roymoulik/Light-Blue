@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"runtime"
 	"time"
 
@@ -27,7 +26,7 @@ type EngineClass struct {
 	quit_mtd          bool
 	killer_moves      [100][2]*chess.Move
 	threads           int
-	mainline          [100]*chess.Move
+	quit_search       bool
 }
 
 type Engine interface {
@@ -41,8 +40,6 @@ type Engine interface {
 	probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
 	setBenchmarkMode(int)
 	addKillerMove(*chess.Move, int)
-	setMainLine()
-	printMainLine()
 	time_up() bool
 	Add_Zobrist_History(uint64)
 	Remove_Zobrist_History()
@@ -75,6 +72,43 @@ type EngineCounters struct {
 	hashes_used      int
 	hashes_written   int
 }
+
+// -----------------------------------------------------------------------------
+// 		Principal Variation Stuff
+// 		(Adapted from https://github.com/algerbrex/blunder)
+// -----------------------------------------------------------------------------
+
+type PVLine struct {
+	Moves []*chess.Move
+}
+
+// Clear the principal variation line.
+func (pvLine *PVLine) clear() {
+	pvLine.Moves = nil
+}
+
+// Update the principal variation line with a new best move,
+// and a new line of best play after the best move.
+func (pvLine *PVLine) update(move *chess.Move, newPVLine PVLine) {
+	pvLine.clear()
+	pvLine.Moves = append(pvLine.Moves, move)
+	pvLine.Moves = append(pvLine.Moves, newPVLine.Moves...)
+}
+
+// Get the best move from the principal variation line.
+func (pvLine *PVLine) getPVMove() *chess.Move {
+	if len(pvLine.Moves) == 0 {
+		return nil
+	}
+	return pvLine.Moves[0]
+}
+
+func (pvLine PVLine) String() string {
+	pv := fmt.Sprintf("%s", pvLine.Moves)
+	return pv[1 : len(pv)-1]
+}
+
+// -----------------------------------------------------------------------------
 
 type Result struct {
 	eval  int
@@ -134,29 +168,6 @@ func (engine *EngineClass) addKillerMove(move *chess.Move, ply int) {
 		engine.killer_moves[ply][1] = engine.killer_moves[ply][0]
 		engine.killer_moves[ply][0] = move
 	}
-}
-
-func (engine *EngineClass) setMainLine() {
-	engine.mainline = [100]*chess.Move{}
-
-	i := engine.zobristHistoryPly
-	cnt := 0
-	for {
-		if engine.zobristHistory[i+1] == 0 {
-			break
-		}
-		var _, _, tt_move = engine.probeTTPosition(engine.zobristHistory[i], 0, 0, -math.MaxInt, math.MaxInt)
-		engine.mainline[cnt] = tt_move
-		i++
-		cnt++
-	}
-}
-func (engine *EngineClass) printMainLine() {
-	fmt.Print(" pv")
-	for i := 0; i < engine.max_ply; i++ {
-		fmt.Print(" ", engine.mainline[i])
-	}
-	fmt.Println()
 }
 
 func (engine *EngineClass) time_up() bool {

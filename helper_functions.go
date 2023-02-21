@@ -57,3 +57,19 @@ func Max(x, y int) int {
 	}
 	return x
 }
+
+func getMateOrCPScore(score int) string {
+	if score > MATE_CUTOFF {
+		pliesToMate := CHECKMATE_VALUE - score
+		mateInN := (pliesToMate / 2) + (pliesToMate % 2)
+		return fmt.Sprintf("mate %d", mateInN)
+	}
+
+	if score < -MATE_CUTOFF {
+		pliesToMate := -CHECKMATE_VALUE - score
+		mateInN := (pliesToMate / 2) + (pliesToMate % 2)
+		return fmt.Sprintf("mate %d", mateInN)
+	}
+
+	return fmt.Sprintf("cp %d", score)
+}
