@@ -99,16 +99,14 @@ func (engine *light_blue) iterative_deepening(
 		engine.max_ply = depth
 
 		best_move = pvLine.getPVMove()
-		total_nodes := engine.counters.nodes_searched +
-			engine.counters.q_nodes_searched
 		total_time := time.Since(engine.start).Milliseconds() + 1
 
 		fmt.Printf(
 			"info depth %d score %s nodes %d nps %d time %d pv %s\n",
 			engine.max_ply,
 			getMateOrCPScore(best_eval),
-			total_nodes,
-			int64(total_nodes*1000)/total_time,
+			engine.getTotalNodesSearched(),
+			int64(engine.getTotalNodesSearched()*1000)/total_time,
 			total_time,
 			pvLine,
 		)
@@ -459,7 +457,6 @@ func (engine *light_blue) q_search(
 	}
 
 	// Sort Moves
-	// moves := score_moves_v2(get_q_moves(position), position.Board())
 	moves := score_moves(
 		get_q_moves(position),
 		position.Board(),

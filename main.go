@@ -4,6 +4,13 @@ import (
 	"runtime"
 )
 
+var timeLeft int64 = 10 * 1000
+var increment int64 = 100
+var moveTime int64 = 2 * 1000
+var movesToGo int16 = 40
+var maxDepth uint8 = 100
+var maxNodeCount uint64 = 1000000000
+
 func main() {
 	print("Running main...")
 	defer print("Finished main.")
@@ -28,21 +35,21 @@ func test_play_self() {
 	game := game_from_opening("Start Position")
 	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
-		60*1000,
-		0,
+		timeLeft,
+		increment,
 		NoValue,
-		int16(NoValue),
-		100,
-		1000000000,
+		movesToGo,
+		maxDepth,
+		maxNodeCount,
 	)
 	engine_2 := new_light_blue()
 	engine_2.timer.Setup(
-		60*1000,
-		0,
+		timeLeft,
+		increment,
 		NoValue,
-		int16(NoValue),
-		100,
-		1000000000,
+		movesToGo,
+		maxDepth,
+		maxNodeCount,
 	)
 	play_self(&engine_1, &engine_2, game)
 }
@@ -51,12 +58,12 @@ func test_play_human() {
 	game := game_from_opening("Start Position")
 	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
-		60*1000,
-		100,
+		InfiniteTime,
+		increment,
 		NoValue,
-		1,
-		100,
-		1000000000,
+		movesToGo,
+		maxDepth,
+		maxNodeCount,
 	)
 	engine_2 := new_engine_human()
 	play_human(&engine_1, &engine_2, game)
