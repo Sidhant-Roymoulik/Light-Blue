@@ -208,11 +208,7 @@ func eval_pos(position *chess.Position, ply int) int {
 	// faster than doing two comparisons
 	if position.Status() != chess.NoMethod {
 		if position.Status() == chess.Checkmate {
-			if position.Turn() == chess.White {
-				return -CHECKMATE_VALUE + ply
-			} else {
-				return CHECKMATE_VALUE - ply
-			}
+			return -CHECKMATE_VALUE + ply
 		}
 		return 0
 	}

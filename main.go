@@ -18,17 +18,17 @@ func main() {
 	print("Initialization complete.")
 	print()
 
-	// test_play_self()
+	test_play_self()
 	// test_play_human()
 
-	test_benchmark()
+	// test_benchmark()
 }
 
 func test_play_self() {
 	game := game_from_opening("Start Position")
 	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
-		10*1000,
+		60*1000,
 		0,
 		NoValue,
 		int16(NoValue),
@@ -37,7 +37,7 @@ func test_play_self() {
 	)
 	engine_2 := new_light_blue()
 	engine_2.timer.Setup(
-		10*1000,
+		60*1000,
 		0,
 		NoValue,
 		int16(NoValue),
