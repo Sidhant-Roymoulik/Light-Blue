@@ -40,6 +40,7 @@ func new_light_blue_1_0() light_blue_1_0 {
 				pvs:                 true,
 				aspiration_window:   true,
 			},
+			timer:             TimeManager{},
 			tt:                TransTable[SearchEntry]{},
 			age:               0,
 			zobristHistory:    [1024]uint64{},
@@ -79,22 +80,23 @@ func (engine *light_blue_1_0) iterative_deepening(
 ) (best_eval int, best_move *chess.Move) {
 	engine.start = time.Now()
 	engine.age ^= 1
+	engine.timer.Start()
 
-	max_depth := 0
+	for depth := 1; depth <= MAX_DEPTH &&
+		depth <= int(engine.timer.MaxDepth) &&
+		engine.timer.MaxNodeCount > 0; depth++ {
 
-	for {
-		max_depth += 1
 		pvLine.clear()
 
-		new_eval := engine.aspiration_window(position, max_depth, pvLine)
+		new_eval := engine.aspiration_window(position, depth, pvLine)
 
-		if engine.time_up() {
+		if engine.timer.IsStopped() {
 			break
 		}
 
 		best_eval = new_eval
 		engine.prev_guess = best_eval
-		engine.max_ply = max_depth
+		engine.max_ply = depth
 
 		best_move = pvLine.getPVMove()
 		total_nodes := engine.counters.nodes_searched +
@@ -112,10 +114,6 @@ func (engine *light_blue_1_0) iterative_deepening(
 		)
 
 		if best_eval >= MATE_CUTOFF {
-			break
-		}
-
-		if max_depth >= MAX_DEPTH {
 			break
 		}
 	}
@@ -193,7 +191,7 @@ func (engine *light_blue_1_0) minimax_start(
 	// Loop through moves
 	for i := 0; i < len(moves); i++ {
 		// Check for search over
-		if engine.time_up() {
+		if engine.timer.IsStopped() {
 			break
 		}
 
@@ -241,7 +239,7 @@ func (engine *light_blue_1_0) minimax_start(
 	}
 
 	// Save position to transposition table
-	if !engine.time_up() {
+	if !engine.timer.IsStopped() {
 		var entry *SearchEntry = engine.tt.Store(hash, max_depth, engine.age)
 		entry.Set(hash, alpha, best_move, 0, max_depth, tt_flag, engine.age)
 
@@ -265,8 +263,14 @@ func (engine *light_blue_1_0) pv_search(
 		return eval_pos(position, ply)
 	}
 
-	// Check for search over
-	if engine.time_up() {
+	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
+		engine.timer.ForceStop()
+	}
+	if (engine.getTotalNodesSearched() & 2047) == 0 {
+		engine.timer.CheckIfTimeIsUp()
+	}
+
+	if engine.timer.IsStopped() {
 		return 0
 	}
 
@@ -275,7 +279,7 @@ func (engine *light_blue_1_0) pv_search(
 
 	// Initialize variables
 	var childPVLine PVLine = PVLine{}
-	// isPVNode := beta-alpha != 1
+	isPVNode := beta-alpha != 1
 
 	// Check for draw by repetition
 	if engine.Is_Draw_By_Repetition(hash) {
@@ -299,21 +303,21 @@ func (engine *light_blue_1_0) pv_search(
 	}
 
 	// Internal Iterative Deepening
-	// if max_depth-ply > IID_Depth_Limit &&
-	// 	(isPVNode || entry.GetFlag() == BetaFlag) &&
-	// 	tt_move == nil {
-	// 	engine.pv_search(
-	// 		position,
-	// 		ply+1,
-	// 		-beta,
-	// 		-alpha,
-	// 		max_depth-IID_Depth_Limit,
-	// 		&childPVLine)
-	// 	if len(childPVLine.Moves) > 0 {
-	// 		tt_move = childPVLine.getPVMove()
-	// 		childPVLine.clear()
-	// 	}
-	// }
+	if max_depth-ply > IID_Depth_Limit &&
+		(isPVNode || entry.GetFlag() == BetaFlag) &&
+		tt_move == nil {
+		engine.pv_search(
+			position,
+			ply+1,
+			-beta,
+			-alpha,
+			max_depth-IID_Depth_Limit,
+			&childPVLine)
+		if len(childPVLine.Moves) > 0 {
+			tt_move = childPVLine.getPVMove()
+			childPVLine.clear()
+		}
+	}
 
 	// Sort Moves
 	moves := score_moves(
@@ -406,7 +410,7 @@ func (engine *light_blue_1_0) pv_search(
 	}
 
 	// Save position to transposition table
-	if !engine.time_up() {
+	if !engine.timer.IsStopped() {
 		var entry *SearchEntry = engine.tt.Store(
 			hash, max_depth-ply, engine.age,
 		)
@@ -429,11 +433,6 @@ func (engine *light_blue_1_0) q_search(
 ) (eval int) {
 	engine.counters.q_nodes_searched++
 
-	// Check for search over
-	if engine.time_up() {
-		return 0
-	}
-
 	start_eval := eval_pos(position, ply)
 
 	// Delta Pruning
@@ -446,6 +445,17 @@ func (engine *light_blue_1_0) q_search(
 
 	if ply >= max_depth*2 {
 		return start_eval
+	}
+
+	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
+		engine.timer.ForceStop()
+	}
+	if (engine.getTotalNodesSearched() & 2047) == 0 {
+		engine.timer.CheckIfTimeIsUp()
+	}
+
+	if engine.timer.IsStopped() {
+		return 0
 	}
 
 	// Sort Moves

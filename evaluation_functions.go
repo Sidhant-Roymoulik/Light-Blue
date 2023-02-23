@@ -8,17 +8,9 @@ import (
 // 		Piece Values
 // -----------------------------------------------------------------------------
 
-// piece weights
-const pawn int = 100
-const knight int = 320
-const bishop int = 330
-const rook int = 525
-const queen int = 900
-const king int = 20000
-
 // piece value map
 var PVM map[chess.PieceType]int = map[chess.PieceType]int{
-	chess.King:   king,
+	chess.King:   20000,
 	chess.Queen:  921,
 	chess.Rook:   441,
 	chess.Bishop: 346,
@@ -27,7 +19,7 @@ var PVM map[chess.PieceType]int = map[chess.PieceType]int{
 }
 
 var PVM_EG map[chess.PieceType]int = map[chess.PieceType]int{
-	chess.King:   king,
+	chess.King:   20000,
 	chess.Queen:  886,
 	chess.Rook:   478,
 	chess.Bishop: 268,

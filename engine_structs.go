@@ -17,6 +17,7 @@ type EngineClass struct {
 	time_limit        time.Duration
 	counters          EngineCounters
 	upgrades          EngineUpgrades
+	timer             TimeManager
 	tt                TransTable[SearchEntry]
 	age               uint8        // this is used to age off entries in the transposition table, in the form of a half move clock
 	zobristHistory    [1024]uint64 // draw detection history
@@ -33,9 +34,10 @@ type Engine interface {
 	getName() string
 	getAuthor() string
 	getDepth() string
-	getNodesSearched() int
-	getQNodesSearched() int
-	getHashesUsed() int
+	getNodesSearched() uint64
+	getQNodesSearched() uint64
+	getHashesUsed() uint64
+	getTotalNodesSearched() uint64
 	// saveTTPosition(uint64, int, *chess.Move, int, int, uint8)
 	// probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
 	setBenchmarkMode(int)
@@ -67,10 +69,10 @@ type EngineUpgrades struct {
 }
 
 type EngineCounters struct {
-	nodes_searched   int
-	q_nodes_searched int
-	hashes_used      int
-	hashes_written   int
+	nodes_searched   uint64
+	q_nodes_searched uint64
+	hashes_used      uint64
+	hashes_written   uint64
 }
 
 // -----------------------------------------------------------------------------
@@ -132,16 +134,20 @@ func (engine *EngineClass) getDepth() string {
 	return fmt.Sprint(engine.max_ply)
 }
 
-func (engine *EngineClass) getNodesSearched() int {
+func (engine *EngineClass) getNodesSearched() uint64 {
 	return engine.counters.nodes_searched
 }
 
-func (engine *EngineClass) getQNodesSearched() int {
+func (engine *EngineClass) getQNodesSearched() uint64 {
 	return engine.counters.q_nodes_searched
 }
 
-func (engine *EngineClass) getHashesUsed() int {
+func (engine *EngineClass) getHashesUsed() uint64 {
 	return engine.counters.hashes_used
+}
+
+func (engine *EngineClass) getTotalNodesSearched() uint64 {
+	return engine.counters.nodes_searched + engine.counters.q_nodes_searched
 }
 
 // func (engine *EngineClass) saveTTPosition(hash uint64, score int, best *chess.Move, ply int, depth int, flag uint8) {

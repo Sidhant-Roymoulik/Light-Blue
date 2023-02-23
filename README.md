@@ -24,7 +24,7 @@ A Chess Engine Built in Golang
  - [x] Principal-Variation + Null-Window Search
  - [x] Aspiration Window
  - [ ] Null Move Pruning
- - [ ] Time Management
+ - [x] Time Management
 
 ### B-Tier Upgrades
 
