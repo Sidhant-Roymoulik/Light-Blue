@@ -18,16 +18,15 @@ func main() {
 	print("Initialization complete.")
 	print()
 
-	test_play_self()
+	// test_play_self()
 	// test_play_human()
 
-	// test_benchmark()
+	test_benchmark()
 }
 
 func test_play_self() {
 	game := game_from_opening("Start Position")
-	engine_1 := new_light_blue_1_0()
-	engine_2 := new_light_blue_1_0()
+	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
 		10*1000,
 		0,
@@ -36,6 +35,7 @@ func test_play_self() {
 		100,
 		1000000000,
 	)
+	engine_2 := new_light_blue()
 	engine_2.timer.Setup(
 		10*1000,
 		0,
@@ -49,7 +49,7 @@ func test_play_self() {
 
 func test_play_human() {
 	game := game_from_opening("Start Position")
-	engine_1 := new_light_blue_1_0()
+	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
 		60*1000,
 		100,
@@ -63,7 +63,7 @@ func test_play_human() {
 }
 
 func test_benchmark() {
-	engine_1 := new_light_blue_1_0()
+	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
 		InfiniteTime,
 		NoValue,

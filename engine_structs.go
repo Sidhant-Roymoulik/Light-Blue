@@ -154,6 +154,7 @@ func (engine *EngineClass) getTotalNodesSearched() uint64 {
 func (engine *EngineClass) setBenchmarkMode(ply int) {
 	engine.upgrades.iterative_deepening = false
 	engine.max_ply = ply
+	engine.timer.MaxDepth = uint8(ply)
 }
 
 func (engine *EngineClass) addKillerMove(move *chess.Move, ply int) {

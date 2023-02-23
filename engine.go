@@ -11,12 +11,12 @@ import (
 // Upgrades over Version 4.1:
 // 		Refactored
 
-type light_blue_1_0 struct {
+type light_blue struct {
 	EngineClass
 }
 
-func new_light_blue_1_0() light_blue_1_0 {
-	return light_blue_1_0{
+func new_light_blue() light_blue {
+	return light_blue{
 		EngineClass{
 			name:       "Light Blue 1",
 			author:     "Sidhant Roymoulik",
@@ -49,7 +49,7 @@ func new_light_blue_1_0() light_blue_1_0 {
 	}
 }
 
-func (engine *light_blue_1_0) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *light_blue) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
 	engine.resetCounters()
 	engine.resetKillerMoves()
 
@@ -60,7 +60,9 @@ func (engine *light_blue_1_0) run(position *chess.Position) (best_eval int, best
 	if engine.upgrades.iterative_deepening {
 		best_eval, best_move = engine.iterative_deepening(position, &pvLine)
 	} else {
-		best_eval = engine.aspiration_window(position, engine.max_ply, &pvLine)
+		best_eval = engine.aspiration_window(
+			position, int(engine.timer.MaxDepth), &pvLine,
+		)
 		best_move = pvLine.getPVMove()
 	}
 
@@ -73,7 +75,7 @@ func (engine *light_blue_1_0) run(position *chess.Position) (best_eval int, best
 	return
 }
 
-func (engine *light_blue_1_0) iterative_deepening(
+func (engine *light_blue) iterative_deepening(
 	position *chess.Position, pvLine *PVLine,
 ) (best_eval int, best_move *chess.Move) {
 	engine.start = time.Now()
@@ -119,7 +121,7 @@ func (engine *light_blue_1_0) iterative_deepening(
 	return best_eval, best_move
 }
 
-func (engine *light_blue_1_0) aspiration_window(
+func (engine *light_blue) aspiration_window(
 	position *chess.Position, max_depth int, pvLine *PVLine,
 ) (eval int) {
 
@@ -161,7 +163,7 @@ func (engine *light_blue_1_0) aspiration_window(
 	return eval
 }
 
-func (engine *light_blue_1_0) minimax_start(
+func (engine *light_blue) minimax_start(
 	position *chess.Position,
 	alpha int,
 	beta int,
@@ -247,7 +249,7 @@ func (engine *light_blue_1_0) minimax_start(
 	return alpha
 }
 
-func (engine *light_blue_1_0) pv_search(
+func (engine *light_blue) pv_search(
 	position *chess.Position,
 	ply int,
 	alpha int,
@@ -422,7 +424,7 @@ func (engine *light_blue_1_0) pv_search(
 	return alpha
 }
 
-func (engine *light_blue_1_0) q_search(
+func (engine *light_blue) q_search(
 	position *chess.Position,
 	ply int,
 	alpha int,

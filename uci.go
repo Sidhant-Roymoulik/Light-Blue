@@ -27,7 +27,7 @@ type Option struct {
 func NewUCIEngine(name string) *UCIEngine {
 	reader := bufio.NewReader(os.Stdin)
 	writer := bufio.NewWriter(os.Stdout)
-	engine := new_light_blue_1_0()
+	engine := new_light_blue()
 	options := make(map[string]Option)
 	return &UCIEngine{reader, writer, engine.getName(), &engine, options}
 }
