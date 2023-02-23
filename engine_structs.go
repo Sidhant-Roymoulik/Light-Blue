@@ -12,7 +12,6 @@ type EngineClass struct {
 	name              string
 	author            string
 	max_ply           int
-	max_q_ply         int
 	start             time.Time
 	time_limit        time.Duration
 	counters          EngineCounters
@@ -23,11 +22,8 @@ type EngineClass struct {
 	zobristHistory    [1024]uint64 // draw detection history
 	zobristHistoryPly uint16       // draw detection ply
 	prev_guess        int          // Used in MTD(f) and aspiration window
-	use_mtd_f         bool
-	quit_mtd          bool
 	killer_moves      [100][2]*chess.Move
 	threads           int
-	quit_search       bool
 }
 
 type Engine interface {
@@ -54,16 +50,13 @@ type Engine interface {
 }
 
 type EngineUpgrades struct {
-	concurrent          bool
 	move_ordering       bool
 	alphabeta           bool
 	q_search            bool
 	delta_pruning       bool
 	iterative_deepening bool
 	transposition_table bool
-	mtd                 bool
 	killer_moves        bool
-	lazy_smp            bool
 	pvs                 bool
 	aspiration_window   bool
 }
@@ -111,12 +104,6 @@ func (pvLine PVLine) String() string {
 }
 
 // -----------------------------------------------------------------------------
-
-type Result struct {
-	eval  int
-	move  *chess.Move
-	depth int
-}
 
 func (engine *EngineClass) getName() string {
 	return engine.name

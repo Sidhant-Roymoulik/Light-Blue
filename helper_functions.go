@@ -2,21 +2,12 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
 func print(str ...any) {
 	fmt.Println(str...)
-}
-
-func resetCounters() {
-	start = time.Now()
-	states = 0
-	q_states = 0
-	hash_hits = 0
-	hash_writes = 0
 }
 
 func game_from_fen(str string) *chess.Game {

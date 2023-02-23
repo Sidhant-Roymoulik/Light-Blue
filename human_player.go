@@ -26,8 +26,6 @@ func new_engine_human() e_human {
 }
 
 func (engine *e_human) run(position *chess.Position) (best_eval int, move *chess.Move) {
-	resetCounters()
-
 	best_eval = 0
 
 	print("Enter move: ")

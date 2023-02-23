@@ -33,18 +33,8 @@ const IID_Depth_Limit int = 4
 
 const R int = 2
 
-const MAX_CONST_DEPTH int = 2
-const MTD_ITER_CUTOFF int = 14
-const MTD_EVAL_CUTOFF int = 0
-
 // -----------------------------------------------------------------------------
 //	Counters
 // -----------------------------------------------------------------------------
 
 var start time.Time
-var states int = 0
-var q_states int = 0
-var hash_hits int = 0
-var hash_reads int = 0
-var hash_writes int = 0
-var hash_collisions int = 0

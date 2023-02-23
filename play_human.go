@@ -49,6 +49,7 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 		}
 
 		if (game.Position().Turn() == chess.Black && engine == white) || (game.Position().Turn() == chess.White && engine == black) {
+			print("Depth:", engine.getDepth())
 			print("Best Move:", move.String())
 			if eval > 100000 {
 				print("Eval: Mate in", (CHECKMATE_VALUE-eval+1)/2)
@@ -58,10 +59,9 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 				print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 			}
 			print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-			print("Unique Positions Checked:", states)
-			print("Q-Positions Checked:", q_states)
-			print("Hashes Used:", hash_hits)
-			print("Total:", states+q_states-hash_hits)
+			print("Nodes explored:", engine.getNodesSearched())
+			print("Q-Nodes explored:", engine.getQNodesSearched())
+			print("Hashes Used:", engine.getHashesUsed())
 			// print(game.FEN())
 		}
 		print(game.Position().Board().Draw())

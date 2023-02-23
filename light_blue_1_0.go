@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math"
-	"runtime"
 	"time"
 
 	"github.com/Sidhant-Roymoulik/chess"
@@ -46,7 +45,6 @@ func new_light_blue_1_0() light_blue_1_0 {
 			zobristHistory:    [1024]uint64{},
 			zobristHistoryPly: 0,
 			killer_moves:      [100][2]*chess.Move{},
-			threads:           runtime.NumCPU(),
 		},
 	}
 }

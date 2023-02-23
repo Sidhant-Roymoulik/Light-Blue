@@ -76,8 +76,6 @@ func (entry *SearchEntry) Get(hash uint64, ply int, depth int, alpha int, beta i
 	shouldUse := false
 	var best *chess.Move = nil
 
-	hash_reads++
-
 	// Since index collisions can occur, test if the hash of the entry at this index
 	// actually matches the hash for the current position.
 	if entry.Hash == hash {
@@ -147,13 +145,6 @@ func (entry *SearchEntry) Get(hash uint64, ply int, depth int, alpha int, beta i
 		// 	out("Right greater than beta?", entry.Score >= beta, entry.Score, beta)
 		// 	out()
 		// }
-	} else {
-		if entry.Hash != 0 {
-			// out(entry.Hash, hash)
-			// out(entry)
-			// panic("hash mismatch")
-			hash_collisions++
-		}
 	}
 
 	// Return the score
