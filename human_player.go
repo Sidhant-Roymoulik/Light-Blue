@@ -13,7 +13,7 @@ type e_human struct {
 func new_engine_human() e_human {
 	return e_human{
 		EngineClass{
-			name: "Sid",
+			name: "Human",
 			// upgrades: EngineUpgrades{
 			// 	move_ordering:       false,
 			// 	alphabeta:           false,

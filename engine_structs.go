@@ -38,7 +38,6 @@ type Engine interface {
 	// probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
 	setBenchmarkMode(int)
 	addKillerMove(*chess.Move, int)
-	time_up() bool
 	Add_Zobrist_History(uint64)
 	Remove_Zobrist_History()
 	Is_Draw_By_Repetition(uint64) bool
@@ -163,10 +162,6 @@ func (engine *EngineClass) addKillerMove(move *chess.Move, ply int) {
 		engine.killer_moves[ply][1] = engine.killer_moves[ply][0]
 		engine.killer_moves[ply][0] = move
 	}
-}
-
-func (engine *EngineClass) time_up() bool {
-	return engine.upgrades.iterative_deepening && time.Since(engine.start) >= engine.time_limit
 }
 
 // adds to zobrist history, which is used for draw detection

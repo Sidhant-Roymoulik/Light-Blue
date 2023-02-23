@@ -1,8 +1,6 @@
 package main
 
 import (
-	"sort"
-
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
@@ -11,7 +9,7 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-	MvvLvaOffset          int = 1000 - 256
+	MvvLvaOffset          int = 10000 - 256
 	PVMoveScore           int = 65
 	FirstKillerMoveScore  int = 10
 	SecondKillerMoveScore int = 20
@@ -37,52 +35,6 @@ func MVV_LVA(move *chess.Move, board *chess.Board) int {
 }
 
 // -----------------------------------------------------------------------------
-// 		Move Evaluation Functions
-// -----------------------------------------------------------------------------
-
-func eval_move_v1(move *chess.Move, board *chess.Board) int {
-	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
-		return CHECKMATE_VALUE
-	}
-
-	delta := 0
-
-	if move.HasTag(chess.MoveTag(chess.Capture)) {
-		delta += PVM[chess.PieceType(board.Piece(move.S2()))]
-	}
-	if move.HasTag(chess.MoveTag(chess.Check)) {
-		delta += 25
-	}
-	if move.HasTag(chess.MoveTag(chess.KingSideCastle)) {
-		delta += 50
-	}
-	if move.HasTag(chess.MoveTag(chess.QueenSideCastle)) {
-		delta += 40
-	}
-
-	return delta
-}
-
-// Adding MVV_LVA
-func eval_move_v2(move *chess.Move, board *chess.Board) int {
-	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
-		return CHECKMATE_VALUE
-	}
-	if move.HasTag(chess.MoveTag(chess.KingSideCastle)) {
-		return 50
-	}
-	if move.HasTag(chess.MoveTag(chess.QueenSideCastle)) {
-		return 40
-	}
-
-	if move.HasTag(chess.Check) {
-		return 10 + MVV_LVA(move, board)
-	}
-
-	return MVV_LVA(move, board)
-}
-
-// -----------------------------------------------------------------------------
 // 		Q-Move Stuff
 // -----------------------------------------------------------------------------
 
@@ -91,9 +43,6 @@ func is_q_move(move *chess.Move) bool {
 		return true
 	}
 	if move.HasTag(chess.EnPassant) {
-		return true
-	}
-	if move.HasTag(chess.MoveTag(chess.Checkmate)) {
 		return true
 	}
 	if move.HasTag(chess.Check) {
@@ -118,119 +67,13 @@ func get_q_moves(position *chess.Position) []*chess.Move {
 }
 
 // -----------------------------------------------------------------------------
-// 		Very Inefficient Move Ordering
-// -----------------------------------------------------------------------------
-
-func move_ordering_v1(position *chess.Position) []*chess.Move {
-	moves := position.ValidMoves()
-	sort.SliceStable(moves, func(i, j int) bool {
-		return eval_move_v1(moves[i], position.Board()) < eval_move_v1(moves[j], position.Board())
-	})
-	return moves
-}
-
-func move_ordering_v2(position *chess.Position) []*chess.Move {
-	moves := position.ValidMoves()
-	sort.SliceStable(moves, func(i, j int) bool {
-		return eval_move_v2(moves[i], position.Board()) < eval_move_v2(moves[j], position.Board())
-	})
-	return moves
-}
-
-// -----------------------------------------------------------------------------
-// 		Less Efficient Move Picking
-// -----------------------------------------------------------------------------
-
-func get_move_v1(position *chess.Position, moves []*chess.Move, start int) *chess.Move {
-	best_eval := eval_move_v2(moves[start], position.Board())
-	for i := start + 1; i < len(moves); i++ {
-		new_eval := eval_move_v2(moves[i], position.Board())
-		if new_eval > best_eval {
-			moves[start], moves[i] = moves[i], moves[start]
-			best_eval = new_eval
-		}
-	}
-	return moves[start]
-}
-
-// -----------------------------------------------------------------------------
-// 		Slightly Less Efficient Move Picking
+// 		Best Move Picking
 // -----------------------------------------------------------------------------
 
 type scored_move struct {
 	move *chess.Move
 	eval int
 }
-
-func score_moves_v1(moves []*chess.Move, board *chess.Board) []scored_move {
-	scores := make([]scored_move, len(moves))
-	for i := 0; i < len(moves); i++ {
-		scores[i] = scored_move{moves[i], eval_move_v2(moves[i], board)}
-	}
-	return scores
-}
-
-func get_move_v2(moves []scored_move, start int) *chess.Move {
-	best_eval := moves[start].eval
-	for i := start + 1; i < len(moves); i++ {
-		if moves[i].eval > best_eval {
-			moves[start], moves[i] = moves[i], moves[start]
-			best_eval = moves[i].eval
-		}
-	}
-	return moves[start].move
-}
-
-// -----------------------------------------------------------------------------
-// 		Efficient Move Picking
-// -----------------------------------------------------------------------------
-
-func score_moves_v2(moves []*chess.Move, board *chess.Board) []scored_move {
-	scores := make([]scored_move, len(moves))
-	for i := 0; i < len(moves); i++ {
-		scores[i] = scored_move{moves[i], eval_move_v2(moves[i], board)}
-		if scores[i].eval > scores[0].eval { // Use first guaranteed iteration to sort first move
-			scores[i], scores[0] = scores[0], scores[i]
-		}
-	}
-	return scores
-}
-
-func get_move_v3(moves []scored_move, start int) *chess.Move {
-	if start == 0 { //	First move is already sorted
-		return moves[0].move
-	}
-	best_eval := moves[start].eval
-	for i := start + 1; i < len(moves); i++ {
-		if moves[i].eval > best_eval {
-			moves[start], moves[i] = moves[i], moves[start]
-			best_eval = moves[i].eval
-		}
-	}
-	return moves[start].move
-}
-
-// Adding Killer Moves
-func score_moves_v3(moves []*chess.Move, board *chess.Board, killer_moves [2]*chess.Move) []scored_move {
-	scores := make([]scored_move, len(moves))
-	for i := 0; i < len(moves); i++ {
-		if moves[i] == killer_moves[0] {
-			scores[i] = scored_move{moves[i], 9}
-		} else if moves[i] == killer_moves[1] {
-			scores[i] = scored_move{moves[i], 5}
-		} else {
-			scores[i] = scored_move{moves[i], eval_move_v2(moves[i], board)}
-		}
-		if scores[i].eval > scores[0].eval { // Use first guaranteed iteration to sort first move
-			scores[i], scores[0] = scores[0], scores[i]
-		}
-	}
-	return scores
-}
-
-// -----------------------------------------------------------------------------
-// 		Best Move Picking
-// -----------------------------------------------------------------------------
 
 func get_move(moves []scored_move, start int) {
 	best_index := start
@@ -250,14 +93,24 @@ func get_move(moves []scored_move, start int) {
 func score_moves(moves []*chess.Move, board *chess.Board, killer_moves [2]*chess.Move, pv_move *chess.Move) []scored_move {
 	scores := make([]scored_move, len(moves))
 	for i := 0; i < len(moves); i++ {
-		if pv_move != nil && moves[i].S1() == pv_move.S1() && moves[i].S2() == pv_move.S2() {
-			scores[i] = scored_move{moves[i], MvvLvaOffset + PVMoveScore}
+		if pv_move != nil &&
+			moves[i].S1() == pv_move.S1() &&
+			moves[i].S2() == pv_move.S2() {
+			scores[i] = scored_move{
+				moves[i], MvvLvaOffset + PVMoveScore,
+			}
 		} else if moves[i].HasTag(chess.Capture) {
-			scores[i] = scored_move{moves[i], MvvLvaOffset + MVV_LVA(moves[i], board)}
+			scores[i] = scored_move{
+				moves[i], MvvLvaOffset + MVV_LVA(moves[i], board),
+			}
 		} else if moves[i] == killer_moves[0] {
-			scores[i] = scored_move{moves[i], MvvLvaOffset - FirstKillerMoveScore}
+			scores[i] = scored_move{
+				moves[i], MvvLvaOffset - FirstKillerMoveScore,
+			}
 		} else if moves[i] == killer_moves[1] {
-			scores[i] = scored_move{moves[i], MvvLvaOffset - SecondKillerMoveScore}
+			scores[i] = scored_move{
+				moves[i], MvvLvaOffset - SecondKillerMoveScore,
+			}
 		} else {
 			scores[i] = scored_move{moves[i], 0}
 		}

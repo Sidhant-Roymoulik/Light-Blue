@@ -21,8 +21,8 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 	for game.Outcome() == chess.NoOutcome {
 		var eval int
 		var move *chess.Move
+		var start = time.Now()
 
-		start = time.Now()
 		if game.Position().Turn() == chess.White {
 			eval, move = white.run(game.Position())
 		} else {

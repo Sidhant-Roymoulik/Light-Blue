@@ -31,7 +31,7 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 	for game.Outcome() == chess.NoOutcome {
 		var eval int
 		var move *chess.Move
-		start = time.Now()
+		var start = time.Now()
 
 		if game.Position().Turn() == chess.White {
 			eval, move = white.run(game.Position())
