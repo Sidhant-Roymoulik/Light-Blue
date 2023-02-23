@@ -18,10 +18,10 @@ func main() {
 	print("Initialization complete.")
 	print()
 
-	// test_play_self()
+	test_play_self()
 	// test_play_human()
 
-	test_benchmark()
+	// test_benchmark()
 }
 
 func test_play_self() {

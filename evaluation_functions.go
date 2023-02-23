@@ -188,6 +188,8 @@ var RookOrQueenOnSeventhBonusEG int = 23
 
 var RookOnOpenFileBonusMG int = 23
 
+var RookOnSemiOpenFileBonusMG int = 10
+
 var IsolatedPawnPenatlyMG int = 17
 var IsolatedPawnPenatlyEG int = 6
 
@@ -510,7 +512,7 @@ func eval_pos(position *chess.Position, ply int) int {
 	}
 
 	var turn chess.Color = position.Turn()
-	var other_turn chess.Color = position.NullMove().Turn()
+	var other_turn chess.Color = turn.Other()
 
 	var score_mg map[chess.Color]int = map[chess.Color]int{
 		chess.White: 0,
@@ -530,81 +532,73 @@ func eval_pos(position *chess.Position, ply int) int {
 		score_eg[chess.Black] += BishopPairBonusEG
 	}
 
-	score_mg[turn] += len(position.ValidMoves())
-	score_eg[turn] += len(position.ValidMoves())
-	score_mg[other_turn] += len(position.NullMove().ValidMoves())
-	score_eg[other_turn] += len(position.NullMove().ValidMoves())
+	valid_moves := position.ValidMoves()
+	other_valid_moves := position.NullMove().ValidMoves()
+
+	score_mg[turn] += len(valid_moves)
+	score_eg[turn] += len(valid_moves)
+	score_mg[other_turn] += len(other_valid_moves)
+	score_eg[other_turn] += len(other_valid_moves)
 
 	for square, piece := range squares {
-		if piece.Color() == chess.White {
-			score_mg[chess.White] += PVM[piece.Type()] +
-				PST_MG[piece.Type()][FLIP[square]]
-			score_eg[chess.White] += PVM_EG[piece.Type()] +
-				PST_EG[piece.Type()][FLIP[square]]
+		var square_file chess.File = square.File()
+		var piece_color chess.Color = piece.Color()
+		var piece_type chess.PieceType = piece.Type()
 
-			if piece.Type() == chess.Queen {
-				if square.Rank() == chess.Rank7 {
-					score_mg[chess.White] += RookOrQueenOnSeventhBonusMG
-					score_eg[chess.White] += RookOrQueenOnSeventhBonusEG
-				}
-			}
+		if piece_color == chess.White {
+			score_mg[chess.White] += PVM[piece_type] +
+				PST_MG[piece_type][FLIP[square]]
+			score_eg[chess.White] += PVM_EG[piece_type] +
+				PST_EG[piece_type][FLIP[square]]
 
-			if piece.Type() == chess.Rook {
-				if square.Rank() == chess.Rank7 {
-					score_mg[chess.White] += RookOrQueenOnSeventhBonusMG
-					score_eg[chess.White] += RookOrQueenOnSeventhBonusEG
-				}
-
-				if P_FILE[chess.White][square.File()] == 0 &&
-					P_FILE[chess.Black][square.File()] == 0 {
-					score_mg[chess.White] += RookOnOpenFileBonusMG
-				}
+			if square.Rank() == chess.Rank7 &&
+				(piece_type == chess.Queen || piece_type == chess.Rook) {
+				score_mg[chess.White] += RookOrQueenOnSeventhBonusMG
+				score_eg[chess.White] += RookOrQueenOnSeventhBonusEG
 			}
 		} else {
-			score_mg[chess.Black] += PVM[piece.Type()] +
-				PST_MG[piece.Type()][square]
-			score_eg[chess.Black] += PVM_EG[piece.Type()] +
-				PST_EG[piece.Type()][square]
+			score_mg[chess.Black] += PVM[piece_type] +
+				PST_MG[piece_type][square]
+			score_eg[chess.Black] += PVM_EG[piece_type] +
+				PST_EG[piece_type][square]
 
-			if piece.Type() == chess.Queen {
-				if square.Rank() == chess.Rank2 {
-					score_mg[chess.Black] += RookOrQueenOnSeventhBonusMG
-					score_eg[chess.Black] += RookOrQueenOnSeventhBonusEG
-				}
-			}
-
-			if piece.Type() == chess.Rook {
-				if square.Rank() == chess.Rank2 {
-					score_mg[chess.Black] += RookOrQueenOnSeventhBonusMG
-					score_eg[chess.Black] += RookOrQueenOnSeventhBonusEG
-				}
-
-				if P_FILE[chess.White][square.File()] == 0 &&
-					P_FILE[chess.Black][square.File()] == 0 {
-					score_mg[chess.Black] += RookOnOpenFileBonusMG
-				}
+			if square.Rank() == chess.Rank2 &&
+				(piece_type == chess.Queen || piece_type == chess.Rook) {
+				score_mg[chess.Black] += RookOrQueenOnSeventhBonusMG
+				score_eg[chess.Black] += RookOrQueenOnSeventhBonusEG
 			}
 		}
 
-		if piece.Type() == chess.Pawn {
-			if P_FILE[piece.Color()][square.File()] > 1 {
-				score_mg[piece.Color()] -= DoubledPawnPenatlyMG
-				score_eg[piece.Color()] -= DoubledPawnPenatlyEG
+		if piece_type == chess.Pawn {
+			if P_FILE[piece_color][square_file] > 1 {
+				score_mg[piece_color] -= DoubledPawnPenatlyMG
+				score_eg[piece_color] -= DoubledPawnPenatlyEG
 			}
 
 			var isIsolated bool = true
-			if square.File() > chess.FileA &&
-				P_FILE[piece.Color()][square.File()-1] > 0 {
+			if square_file > chess.FileA &&
+				P_FILE[piece_color][square_file-1] > 0 {
 				isIsolated = false
 			}
-			if square.File() < chess.FileH &&
-				P_FILE[piece.Color()][square.File()+1] > 0 {
+			if square_file < chess.FileH &&
+				P_FILE[piece_color][square_file+1] > 0 {
 				isIsolated = false
 			}
 			if isIsolated {
-				score_mg[piece.Color()] -= IsolatedPawnPenatlyMG
-				score_eg[piece.Color()] -= IsolatedPawnPenatlyEG
+				score_mg[piece_color] -= IsolatedPawnPenatlyMG
+				score_eg[piece_color] -= IsolatedPawnPenatlyEG
 			}
+		}
+
+		if piece_type == chess.Rook {
+			if P_FILE[piece_color][square_file] == 0 {
+				if P_FILE[piece_color.Other()][square_file] == 0 {
+					score_mg[piece_color] += RookOnOpenFileBonusMG
+				} else {
+					score_mg[piece_color] += RookOnSemiOpenFileBonusMG
+				}
+			}
+
 		}
 	}
 

@@ -36,8 +36,8 @@ type Engine interface {
 	getNodesSearched() int
 	getQNodesSearched() int
 	getHashesUsed() int
-	saveTTPosition(uint64, int, *chess.Move, int, int, uint8)
-	probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
+	// saveTTPosition(uint64, int, *chess.Move, int, int, uint8)
+	// probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
 	setBenchmarkMode(int)
 	addKillerMove(*chess.Move, int)
 	time_up() bool
@@ -128,7 +128,8 @@ func (engine *EngineClass) getAuthor() string {
 }
 
 func (engine *EngineClass) getDepth() string {
-	return fmt.Sprint(engine.max_ply) + "/" + fmt.Sprint(engine.max_q_ply)
+	// return fmt.Sprint(engine.max_ply) + "/" + fmt.Sprint(engine.max_q_ply)
+	return fmt.Sprint(engine.max_ply)
 }
 
 func (engine *EngineClass) getNodesSearched() int {
@@ -143,19 +144,19 @@ func (engine *EngineClass) getHashesUsed() int {
 	return engine.counters.hashes_used
 }
 
-func (engine *EngineClass) saveTTPosition(hash uint64, score int, best *chess.Move, ply int, depth int, flag uint8) {
-	if !engine.time_up() && best != nil {
-		var entry *SearchEntry = engine.tt.Store(hash, depth, engine.age)
-		entry.Set(hash, score, best, ply, depth, flag, engine.age)
-		engine.counters.hashes_written++
-	}
-}
+// func (engine *EngineClass) saveTTPosition(hash uint64, score int, best *chess.Move, ply int, depth int, flag uint8) {
+// 	if !engine.time_up() && best != nil {
+// 		var entry *SearchEntry = engine.tt.Store(hash, depth, engine.age)
+// 		entry.Set(hash, score, best, ply, depth, flag, engine.age)
+// 		engine.counters.hashes_written++
+// 	}
+// }
 
-func (engine *EngineClass) probeTTPosition(hash uint64, ply int, depth int, alpha int, beta int) (int, bool, *chess.Move) {
-	var entry *SearchEntry = engine.tt.Probe(hash)
-	var tt_eval, should_use, tt_move = entry.Get(hash, 0, depth, alpha, beta)
-	return tt_eval, should_use, tt_move
-}
+// func (engine *EngineClass) probeTTPosition(hash uint64, ply int, depth int, alpha int, beta int) (int, bool, *chess.Move) {
+// 	var entry *SearchEntry = engine.tt.Probe(hash)
+// 	var tt_eval, should_use, tt_move = entry.Get(hash, 0, depth, alpha, beta)
+// 	return tt_eval, should_use, tt_move
+// }
 
 func (engine *EngineClass) setBenchmarkMode(ply int) {
 	engine.upgrades.iterative_deepening = false

@@ -22,7 +22,6 @@ func new_light_blue_1_0() light_blue_1_0 {
 			name:       "Light Blue 1",
 			author:     "Sidhant Roymoulik",
 			max_ply:    0,
-			max_q_ply:  0,
 			time_limit: TIME_LIMIT,
 			counters: EngineCounters{
 				nodes_searched:   0,
@@ -75,10 +74,11 @@ func (engine *light_blue_1_0) run(position *chess.Position) (best_eval int, best
 	return
 }
 
-func (engine *light_blue_1_0) iterative_deepening(position *chess.Position, pvLine *PVLine) (best_eval int, best_move *chess.Move) {
+func (engine *light_blue_1_0) iterative_deepening(
+	position *chess.Position, pvLine *PVLine,
+) (best_eval int, best_move *chess.Move) {
 	engine.start = time.Now()
 	engine.age ^= 1
-	engine.max_q_ply = 0
 
 	max_depth := 0
 
@@ -89,7 +89,6 @@ func (engine *light_blue_1_0) iterative_deepening(position *chess.Position, pvLi
 		new_eval := engine.aspiration_window(position, max_depth, pvLine)
 
 		if engine.time_up() {
-			engine.max_q_ply -= 2
 			break
 		}
 
@@ -98,7 +97,8 @@ func (engine *light_blue_1_0) iterative_deepening(position *chess.Position, pvLi
 		engine.max_ply = max_depth
 
 		best_move = pvLine.getPVMove()
-		total_nodes := engine.counters.nodes_searched + engine.counters.q_nodes_searched
+		total_nodes := engine.counters.nodes_searched +
+			engine.counters.q_nodes_searched
 		total_time := time.Since(engine.start).Milliseconds() + 1
 
 		fmt.Printf(
@@ -114,15 +114,23 @@ func (engine *light_blue_1_0) iterative_deepening(position *chess.Position, pvLi
 		if best_eval >= MATE_CUTOFF {
 			break
 		}
+
+		if max_depth >= MAX_DEPTH {
+			break
+		}
 	}
 
 	return best_eval, best_move
 }
 
-func (engine *light_blue_1_0) aspiration_window(position *chess.Position, max_depth int, pvLine *PVLine) (eval int) {
+func (engine *light_blue_1_0) aspiration_window(
+	position *chess.Position, max_depth int, pvLine *PVLine,
+) (eval int) {
 
 	if max_depth == 1 {
-		eval = engine.minimax_start(position, -math.MaxInt, math.MaxInt, max_depth, pvLine)
+		eval = engine.minimax_start(
+			position, -math.MaxInt, math.MaxInt, max_depth, pvLine,
+		)
 		return eval
 	}
 
@@ -149,33 +157,38 @@ func (engine *light_blue_1_0) aspiration_window(position *chess.Position, max_de
 		if DEBUG {
 			// print("Aspiration loose fail")
 		}
-		eval = engine.minimax_start(position, -math.MaxInt, math.MaxInt, max_depth, pvLine)
+		eval = engine.minimax_start(
+			position, -math.MaxInt, math.MaxInt, max_depth, pvLine,
+		)
 	}
 
 	return eval
 }
 
-func (engine *light_blue_1_0) minimax_start(position *chess.Position, alpha int, beta int, max_depth int, pvLine *PVLine) (eval int) {
+func (engine *light_blue_1_0) minimax_start(
+	position *chess.Position,
+	alpha int,
+	beta int,
+	max_depth int,
+	pvLine *PVLine,
+) (eval int) {
 	engine.counters.nodes_searched++
 
 	// Generate hash for position
-	// var hash uint64 = Zobrist.GenHash(position)
-
-	// Check for usable entry in transposition table
-	// var tt_eval, should_use, tt_move = engine.probeTTPosition(hash, 0, max_depth, alpha, beta)
-	// if should_use {
-	// 	engine.counters.hashes_used++
-	// 	return tt_eval, tt_move
-	// }
+	var hash uint64 = Zobrist.GenHash(position)
 
 	// Sort Moves
-	moves := score_moves(position.ValidMoves(), position.Board(), engine.killer_moves[0], pvLine.getPVMove())
+	moves := score_moves(
+		position.ValidMoves(),
+		position.Board(),
+		engine.killer_moves[0],
+		pvLine.getPVMove(),
+	)
 
 	// Initialize variables
 	var best_move *chess.Move = nil
 	var tt_flag = AlphaFlag
 	var childPVLine PVLine = PVLine{}
-	engine.quit_search = false
 
 	// Loop through moves
 	for i := 0; i < len(moves); i++ {
@@ -195,7 +208,13 @@ func (engine *light_blue_1_0) minimax_start(position *chess.Position, alpha int,
 		engine.Add_Zobrist_History(Zobrist.GenHash(new_position))
 
 		// Principal-Variation Search
-		new_eval := -engine.pv_search(new_position, 1, -beta, -alpha, max_depth, &childPVLine)
+		new_eval := -engine.pv_search(
+			new_position,
+			1,
+			-beta,
+			-alpha,
+			max_depth,
+			&childPVLine)
 
 		// Clear move from history
 		engine.Remove_Zobrist_History()
@@ -222,15 +241,29 @@ func (engine *light_blue_1_0) minimax_start(position *chess.Position, alpha int,
 	}
 
 	// Save position to transposition table
-	if !engine.time_up() && best_move != nil {
-		engine.saveTTPosition(Zobrist.GenHash(position), alpha, best_move, 0, max_depth, tt_flag)
+	if !engine.time_up() {
+		var entry *SearchEntry = engine.tt.Store(hash, max_depth, engine.age)
+		entry.Set(hash, alpha, best_move, 0, max_depth, tt_flag, engine.age)
+
+		engine.counters.hashes_written++
 	}
 
 	return alpha
 }
 
-func (engine *light_blue_1_0) pv_search(position *chess.Position, ply int, alpha int, beta int, max_depth int, pvLine *PVLine) (eval int) {
+func (engine *light_blue_1_0) pv_search(
+	position *chess.Position,
+	ply int,
+	alpha int,
+	beta int,
+	max_depth int,
+	pvLine *PVLine,
+) (eval int) {
 	engine.counters.nodes_searched++
+
+	if ply >= MAX_DEPTH {
+		return eval_pos(position, ply)
+	}
 
 	// Check for search over
 	if engine.time_up() {
@@ -252,19 +285,43 @@ func (engine *light_blue_1_0) pv_search(position *chess.Position, ply int, alpha
 	// Start Q-Search
 	if ply >= max_depth {
 		engine.counters.nodes_searched--
-		return engine.q_search(position, ply, alpha, beta, max_depth, pvLine)
+		return engine.q_search(position, ply, alpha, beta, max_depth)
 	}
 
 	// Check for usable entry in transposition table
 	var entry *SearchEntry = engine.tt.Probe(hash)
-	var tt_eval, should_use, tt_move = entry.Get(hash, 0, max_depth-ply, alpha, beta)
+	var tt_eval, should_use, tt_move = entry.Get(
+		hash, ply, max_depth-ply, alpha, beta,
+	)
 	if should_use {
 		engine.counters.hashes_used++
 		return tt_eval
 	}
 
+	// Internal Iterative Deepening
+	// if max_depth-ply > IID_Depth_Limit &&
+	// 	(isPVNode || entry.GetFlag() == BetaFlag) &&
+	// 	tt_move == nil {
+	// 	engine.pv_search(
+	// 		position,
+	// 		ply+1,
+	// 		-beta,
+	// 		-alpha,
+	// 		max_depth-IID_Depth_Limit,
+	// 		&childPVLine)
+	// 	if len(childPVLine.Moves) > 0 {
+	// 		tt_move = childPVLine.getPVMove()
+	// 		childPVLine.clear()
+	// 	}
+	// }
+
 	// Sort Moves
-	moves := score_moves(position.ValidMoves(), position.Board(), engine.killer_moves[ply], tt_move)
+	moves := score_moves(
+		position.ValidMoves(),
+		position.Board(),
+		engine.killer_moves[ply],
+		tt_move,
+	)
 
 	// If there are no moves, return the eval
 	if len(moves) == 0 {
@@ -292,13 +349,34 @@ func (engine *light_blue_1_0) pv_search(position *chess.Position, ply int, alpha
 
 		if bSearchPv {
 			// Principal-Variation Search
-			new_eval = -engine.pv_search(new_position, ply+1, -beta, -alpha, max_depth, &childPVLine)
+			new_eval = -engine.pv_search(
+				new_position,
+				ply+1,
+				-beta,
+				-alpha,
+				max_depth,
+				&childPVLine,
+			)
 		} else {
 			// Zero-Window Search
-			new_eval = -engine.pv_search(new_position, ply+1, -alpha-1, -alpha, max_depth, &childPVLine)
+			new_eval = -engine.pv_search(
+				new_position,
+				ply+1,
+				-alpha-1,
+				-alpha,
+				max_depth,
+				&childPVLine,
+			)
 			if new_eval > alpha && new_eval < beta {
 				// Principal-Variation Search
-				new_eval = -engine.pv_search(new_position, ply+1, -beta, -alpha, max_depth, &childPVLine)
+				new_eval = -engine.pv_search(
+					new_position,
+					ply+1,
+					-beta,
+					-alpha,
+					max_depth,
+					&childPVLine,
+				)
 			}
 		}
 
@@ -328,16 +406,28 @@ func (engine *light_blue_1_0) pv_search(position *chess.Position, ply int, alpha
 	}
 
 	// Save position to transposition table
-	if !engine.time_up() && best_move != nil {
-		engine.saveTTPosition(hash, alpha, best_move, 0, max_depth-ply, tt_flag)
+	if !engine.time_up() {
+		var entry *SearchEntry = engine.tt.Store(
+			hash, max_depth-ply, engine.age,
+		)
+		entry.Set(
+			hash, alpha, best_move, ply, max_depth-ply, tt_flag, engine.age,
+		)
+
+		engine.counters.hashes_written++
 	}
 
 	return alpha
 }
 
-func (engine *light_blue_1_0) q_search(position *chess.Position, ply int, alpha int, beta int, max_depth int, pvLine *PVLine) (eval int) {
+func (engine *light_blue_1_0) q_search(
+	position *chess.Position,
+	ply int,
+	alpha int,
+	beta int,
+	max_depth int,
+) (eval int) {
 	engine.counters.q_nodes_searched++
-	engine.max_q_ply = Max(engine.max_q_ply, ply)
 
 	// Check for search over
 	if engine.time_up() {
@@ -360,19 +450,24 @@ func (engine *light_blue_1_0) q_search(position *chess.Position, ply int, alpha 
 
 	// Sort Moves
 	// moves := score_moves_v2(get_q_moves(position), position.Board())
-	moves := score_moves(get_q_moves(position), position.Board(), [2]*chess.Move{nil, nil}, nil)
+	moves := score_moves(
+		get_q_moves(position),
+		position.Board(),
+		[2]*chess.Move{nil, nil},
+		nil,
+	)
 
 	if len(moves) == 0 {
 		return start_eval
 	}
 
-	var childPVLine PVLine = PVLine{}
-
 	for i := 0; i < len(moves); i++ {
 		get_move(moves, i)
 		move := moves[i].move
 
-		new_eval := -engine.q_search(position.Update(move), ply+1, -beta, -alpha, max_depth, &childPVLine)
+		new_eval := -engine.q_search(
+			position.Update(move), ply+1, -beta, -alpha, max_depth,
+		)
 
 		if new_eval > alpha {
 			if new_eval >= beta {
@@ -380,10 +475,7 @@ func (engine *light_blue_1_0) q_search(position *chess.Position, ply int, alpha 
 			}
 
 			alpha = new_eval
-			pvLine.update(move, childPVLine)
 		}
-
-		childPVLine.clear()
 	}
 
 	return alpha
