@@ -6,7 +6,7 @@ import "time"
 //	Debug
 // -----------------------------------------------------------------------------
 
-const DEBUG bool = true
+const DEBUG bool = false
 
 // -----------------------------------------------------------------------------
 //	Openings
@@ -22,13 +22,29 @@ var CHESS_OPENINGS map[string][]string = map[string][]string{
 //	Parameters
 // -----------------------------------------------------------------------------
 
-const TIME_LIMIT time.Duration = 2 * time.Second // Time in sec
-const CHECKMATE_VALUE int = 1000000
-const MATE_CUTOFF int = CHECKMATE_VALUE / 2
-const MAX_DEPTH int = 100
+const (
+	TIME_LIMIT      time.Duration = 2 * time.Second // Time in sec
+	CHECKMATE_VALUE int           = 1000000
+	MATE_CUTOFF     int           = CHECKMATE_VALUE / 2
+	MAX_DEPTH       int           = 100
 
-const WINDOW_VALUE_TIGHT int = 25
-const WINDOW_VALUE int = 100
-const IID_Depth_Limit int = 4
+	WINDOW_VALUE_TIGHT int = 25
+	WINDOW_VALUE       int = 100
 
-const R int = 2
+	StaticNullMovePruningBaseMargin int = 85
+	FutilityPruningDepthLimit       int = 8
+	IID_Depth_Limit                 int = 4
+	IID_Depth_Reduction             int = 2
+)
+
+var FutilityMargins = [9]int{
+	0,
+	100, // depth 1
+	160, // depth 2
+	220, // depth 3
+	280, // depth 4
+	340, // depth 5
+	400, // depth 6
+	460, // depth 7
+	520, // depth 8
+}

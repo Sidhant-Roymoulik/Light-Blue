@@ -64,3 +64,10 @@ func getMateOrCPScore(score int) string {
 
 	return fmt.Sprintf("cp %d", score)
 }
+
+func abs(x int) int {
+	if x < 0 {
+		return -1
+	}
+	return x
+}

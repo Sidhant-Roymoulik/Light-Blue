@@ -9,13 +9,14 @@ A Chess Engine Built in Golang
 
  - [x] DFS
  - [x] Alpha-Beta Pruning
+ - [x] Time Management
+ - [ ] UCI Protocol
 
 ### S-Tier Upgrades
 
  - [x] Piece Square Tables
  - [x] Quiescence Search
  - [x] Transposition/Hash Tables
- - [ ] UCI Protocol
 
 ### A-Tier Upgrades
 
@@ -24,21 +25,25 @@ A Chess Engine Built in Golang
  - [x] Principal-Variation + Null-Window Search
  - [x] Aspiration Window
  - [ ] Null Move Pruning
- - [x] Time Management
+ - [ ] Openings
+ - [ ] Tablebases
 
 ### B-Tier Upgrades
 
  - [ ] Lazy SMP (Parrallelize Engine using Golang)
- - [ ] Razoring
- - [ ] Reverse Futility Pruning
+ - [x] Check Extension
+ - [x] Static Move Pruning
+ - [x] Razoring
+ - [ ] Futility Pruning
+ - [x] Internal Iterative Deepening
+ - [ ] Late Move Pruning
+ - [ ] Late Move Reduction
  - [ ] Singular Extensions
- - [ ] Openings
- - [ ] Tablebases
 
 ### C-Tier Upgrades
 
- - [ ] MTD(f) & MTD(bi)
  - [x] Killer Moves Heuristic
+ - [ ] MTD(f) & MTD(bi)
  - [ ] Anything Else I Can Think Of
 
 ---
