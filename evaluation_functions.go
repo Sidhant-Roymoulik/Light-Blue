@@ -14,8 +14,7 @@ const (
 
 	RookOrQueenOnSeventhBonusEG int = 23
 
-	RookOnOpenFileBonusMG int = 23
-
+	RookOnOpenFileBonusMG     int = 23
 	RookOnSemiOpenFileBonusMG int = 10
 
 	IsolatedPawnPenatlyMG int = 17
@@ -23,6 +22,10 @@ const (
 
 	DoubledPawnPenatlyMG int = 1
 	DoubledPawnPenatlyEG int = 16
+
+	TempoBonusMG int = 14
+
+	DrawishScaleFactor int = 16
 
 	// -------------------------------------------------------------------------
 	// 		Tapered Evaluation Values
@@ -284,22 +287,34 @@ func eval_pos(position *chess.Position, ply int) int {
 		}
 	}
 
-	var white_knights int = OCC[chess.White][chess.Knight]
-	var white_bishops int = OCC[chess.White][chess.Bishop]
-	var black_knights int = OCC[chess.Black][chess.Knight]
-	var black_bishops int = OCC[chess.Black][chess.Bishop]
+	white_pawns := OCC[chess.White][chess.Pawn]
+	white_knights := OCC[chess.White][chess.Knight]
+	white_bishops := OCC[chess.White][chess.Bishop]
+	white_rooks := OCC[chess.White][chess.Rook]
+	white_queens := OCC[chess.White][chess.Queen]
 
-	var pawns int = OCC[chess.White][chess.Pawn] + OCC[chess.Black][chess.Pawn]
-	var knights int = white_knights + black_knights
-	var bishops int = white_bishops + black_bishops
-	var rooks int = OCC[chess.White][chess.Rook] + OCC[chess.Black][chess.Rook]
-	var queens int = OCC[chess.White][chess.Queen] + OCC[chess.Black][chess.Queen]
+	black_pawns := OCC[chess.Black][chess.Pawn]
+	black_knights := OCC[chess.Black][chess.Knight]
+	black_bishops := OCC[chess.Black][chess.Bishop]
+	black_rooks := OCC[chess.Black][chess.Rook]
+	black_queens := OCC[chess.Black][chess.Queen]
 
-	var majors int = queens + rooks
-	var minors int = bishops + knights
+	pawns := white_pawns + black_pawns
+	knights := white_knights + black_knights
+	bishops := white_bishops + black_bishops
+	rooks := white_rooks + black_rooks
+	queens := white_queens + black_queens
+
+	white_minors := white_knights + white_bishops
+	black_minors := black_knights + black_bishops
+
+	majors := queens + rooks
+	minors := bishops + knights
+
+	all := majors + minors
 
 	// Draw by Insufficient Material
-	if majors+minors+pawns == 0 {
+	if all == 0 {
 		return 0
 	} else if majors+pawns == 0 {
 		if minors == 1 {
@@ -313,8 +328,30 @@ func eval_pos(position *chess.Position, ply int) int {
 		}
 	}
 
-	var turn chess.Color = position.Turn()
-	var other_turn chess.Color = turn.Other()
+	// Check if position is likely a draw
+	drawish := false
+	if pawns == 0 {
+		if all == 2 {
+			// KQ v KQ
+			if white_queens == 1 && black_queens == 1 {
+				drawish = true
+			}
+			// KR v KR
+			if white_rooks == 1 && black_rooks == 1 {
+				drawish = true
+			}
+			// KN v KN
+			// KN v KB
+			// KB v KB
+			if white_minors == 1 && black_minors == 1 {
+				drawish = true
+			}
+		} else if all == 3 {
+
+		} else if all == 4 {
+
+		}
+	}
 
 	var score_mg map[chess.Color]int = map[chess.Color]int{
 		chess.White: 0,
@@ -325,6 +362,9 @@ func eval_pos(position *chess.Position, ply int) int {
 		chess.Black: 0,
 	}
 
+	turn := position.Turn()
+	other_turn := turn.Other()
+
 	valid_moves := position.ValidMoves()
 	other_valid_moves := position.NullMove().ValidMoves()
 
@@ -332,6 +372,8 @@ func eval_pos(position *chess.Position, ply int) int {
 	score_eg[turn] += len(valid_moves)
 	score_mg[other_turn] += len(other_valid_moves)
 	score_eg[other_turn] += len(other_valid_moves)
+
+	score_mg[turn] += TempoBonusMG
 
 	if OCC[chess.White][chess.Bishop] == 2 {
 		score_mg[chess.White] += BishopPairBonusMG
@@ -395,10 +437,10 @@ func eval_pos(position *chess.Position, ply int) int {
 	}
 
 	// Tapered Evaluation
-	var delta_mg int = score_mg[turn] - score_mg[other_turn]
-	var delta_eg int = score_eg[turn] - score_eg[other_turn]
+	eval_mg := score_mg[turn] - score_mg[other_turn]
+	eval_eg := score_eg[turn] - score_eg[other_turn]
 
-	var phase int = TotalPhase
+	phase := TotalPhase
 	phase -= pawns * PawnPhase
 	phase -= knights * KnightPhase
 	phase -= bishops * BishopPhase
@@ -406,7 +448,11 @@ func eval_pos(position *chess.Position, ply int) int {
 	phase -= queens * QueenPhase
 	phase = (phase*256 + (TotalPhase / 2)) / TotalPhase
 
-	var delta int = ((delta_mg * (256 - phase)) + (delta_eg * phase)) / 256
+	eval := ((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256
 
-	return delta
+	if drawish {
+		eval /= DrawishScaleFactor
+	}
+
+	return eval
 }

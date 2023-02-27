@@ -34,7 +34,7 @@ A Chess Engine Built in Golang
  - [x] Check Extension
  - [x] Static Move Pruning
  - [x] Razoring
- - [ ] Futility Pruning
+ - [x] Futility Pruning
  - [x] Internal Iterative Deepening
  - [ ] Late Move Pruning
  - [ ] Late Move Reduction

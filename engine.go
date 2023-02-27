@@ -269,7 +269,7 @@ func (engine *light_blue) pv_search(
 	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
 		engine.timer.ForceStop()
 	}
-	if (engine.getTotalNodesSearched() & 2047) == 0 {
+	if (engine.getTotalNodesSearched() & 1023) == 0 {
 		engine.timer.CheckIfTimeIsUp()
 	}
 
@@ -283,8 +283,8 @@ func (engine *light_blue) pv_search(
 	// Initialize variables
 	childPVLine := PVLine{}
 	isPVNode := beta-alpha != 1
-	inCheck := prev_move.HasTag(chess.Check)
-	// canFutilityPrune := false
+	inCheck := position.InCheck()
+	canFutilityPrune := false
 
 	// Check Extension
 	if inCheck {
@@ -338,16 +338,16 @@ func (engine *light_blue) pv_search(
 	}
 
 	// Futility Pruning
-	// if depth <= FutilityPruningDepthLimit &&
-	// 	!inCheck &&
-	// 	!isPVNode &&
-	// 	alpha < MATE_CUTOFF &&
-	// 	beta < MATE_CUTOFF {
-	// 	static_eval := eval_pos(position, ply)
-	// 	eval_margin := FutilityMargins[depth]
+	if depth <= FutilityPruningDepthLimit &&
+		!inCheck &&
+		!isPVNode &&
+		alpha < MATE_CUTOFF &&
+		beta < MATE_CUTOFF {
+		static_eval := eval_pos(position, ply)
+		eval_margin := FutilityMargins[depth]
 
-	// 	canFutilityPrune = static_eval+eval_margin <= alpha
-	// }
+		canFutilityPrune = static_eval+eval_margin <= alpha
+	}
 
 	// Internal Iterative Deepening
 	if depth > IID_Depth_Limit &&
@@ -396,13 +396,11 @@ func (engine *light_blue) pv_search(
 		move := moves[i].move
 
 		// Futility Pruning
-		// if canFutilityPrune &&
-		// 	i > 0 &&
-		// 	!move.HasTag(chess.Check) &&
-		// 	!move.HasTag(chess.Capture) &&
-		// 	move.Promo() != chess.NoPieceType {
-		// 	continue
-		// }
+		if canFutilityPrune &&
+			i > 0 &&
+			!is_q_move(move) {
+			continue
+		}
 
 		// Generate new position
 		new_position := position.Update(move)
@@ -424,7 +422,7 @@ func (engine *light_blue) pv_search(
 				move,
 			)
 		} else {
-			// Zero-Window Search
+			// Null-Window Search
 			new_eval = -engine.pv_search(
 				new_position,
 				ply+1,
@@ -515,7 +513,7 @@ func (engine *light_blue) q_search(
 	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
 		engine.timer.ForceStop()
 	}
-	if (engine.getTotalNodesSearched() & 2047) == 0 {
+	if (engine.getTotalNodesSearched() & 1023) == 0 {
 		engine.timer.CheckIfTimeIsUp()
 	}
 

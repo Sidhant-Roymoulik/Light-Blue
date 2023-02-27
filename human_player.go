@@ -14,13 +14,6 @@ func new_engine_human() e_human {
 	return e_human{
 		EngineClass{
 			name: "Human",
-			// upgrades: EngineUpgrades{
-			// 	move_ordering:       false,
-			// 	alphabeta:           false,
-			// 	iterative_deepening: false,
-			// 	q_search:            false,
-			// 	concurrent:          false,
-			// },
 		},
 	}
 }
