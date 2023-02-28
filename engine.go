@@ -212,7 +212,7 @@ func (engine *light_blue) minimax_start(
 			-alpha,
 			max_depth,
 			&childPVLine,
-			move,
+			true,
 		)
 
 		// Clear move from history
@@ -257,7 +257,7 @@ func (engine *light_blue) pv_search(
 	beta int,
 	max_depth int,
 	pvLine *PVLine,
-	prev_move *chess.Move,
+	do_null bool,
 ) (eval int) {
 	engine.counters.nodes_searched++
 
@@ -326,6 +326,26 @@ func (engine *light_blue) pv_search(
 		}
 	}
 
+	// Null Move Pruning
+	if do_null && !inCheck && !isPVNode && depth >= NMR_Depth_Limit {
+		R := 3 + depth/6
+		eval := -engine.pv_search(
+			position.NullMove(),
+			ply+1,
+			-beta,
+			-beta+1,
+			max_depth-R,
+			&childPVLine,
+			false,
+		)
+
+		childPVLine.clear()
+
+		if eval >= beta && abs(eval) < MATE_CUTOFF {
+			return beta
+		}
+	}
+
 	// Razoring
 	if depth <= 2 && !inCheck && !isPVNode {
 		static_eval := eval_pos(position, ply)
@@ -360,7 +380,7 @@ func (engine *light_blue) pv_search(
 			-alpha,
 			max_depth-IID_Depth_Reduction,
 			&childPVLine,
-			prev_move,
+			do_null,
 		)
 		if len(childPVLine.Moves) > 0 {
 			tt_move = childPVLine.getPVMove()
@@ -376,7 +396,7 @@ func (engine *light_blue) pv_search(
 		tt_move,
 	)
 
-	// If there are no moves return wither checkmate or draw
+	// If there are no moves return either checkmate or draw
 	if len(moves) == 0 {
 		if inCheck {
 			return -CHECKMATE_VALUE + ply
@@ -419,7 +439,7 @@ func (engine *light_blue) pv_search(
 				-alpha,
 				max_depth,
 				&childPVLine,
-				move,
+				do_null,
 			)
 		} else {
 			// Null-Window Search
@@ -430,7 +450,7 @@ func (engine *light_blue) pv_search(
 				-alpha,
 				max_depth,
 				&childPVLine,
-				move,
+				do_null,
 			)
 			if new_eval > alpha && new_eval < beta {
 				// Principal-Variation Search
@@ -441,7 +461,7 @@ func (engine *light_blue) pv_search(
 					-alpha,
 					max_depth,
 					&childPVLine,
-					move,
+					do_null,
 				)
 			}
 		}
@@ -496,9 +516,10 @@ func (engine *light_blue) q_search(
 	engine.counters.q_nodes_searched++
 
 	eval := eval_pos(position, ply+max_depth)
+	inCheck := ply <= 2 && position.InCheck()
 
 	// Delta Pruning
-	if eval >= beta {
+	if !inCheck && eval >= beta {
 		return beta
 	}
 	if eval >= alpha {
@@ -522,12 +543,23 @@ func (engine *light_blue) q_search(
 	}
 
 	// Sort Moves
-	moves := score_moves(
-		get_q_moves(position),
-		position.Board(),
-		[2]*chess.Move{nil, nil},
-		nil,
-	)
+	var moves []scored_move = nil
+
+	if inCheck {
+		moves = score_moves(
+			position.ValidMoves(),
+			position.Board(),
+			[2]*chess.Move{nil, nil},
+			nil,
+		)
+	} else {
+		moves = score_moves(
+			get_q_moves(position),
+			position.Board(),
+			[2]*chess.Move{nil, nil},
+			nil,
+		)
+	}
 
 	for i := 0; i < len(moves); i++ {
 		get_move(moves, i)

@@ -24,7 +24,7 @@ A Chess Engine Built in Golang
  - [x] Move Picking
  - [x] Principal-Variation + Null-Window Search
  - [x] Aspiration Window
- - [ ] Null Move Pruning
+ - [x] Null Move Pruning
  - [ ] Openings
  - [ ] Tablebases
 

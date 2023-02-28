@@ -32,6 +32,7 @@ const (
 	WINDOW_VALUE       int = 100
 
 	StaticNullMovePruningBaseMargin int = 85
+	NMR_Depth_Limit                 int = 2
 	FutilityPruningDepthLimit       int = 8
 	IID_Depth_Limit                 int = 4
 	IID_Depth_Reduction             int = 2

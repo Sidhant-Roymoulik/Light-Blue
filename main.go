@@ -4,8 +4,8 @@ import (
 	"runtime"
 )
 
-var timeLeft int64 = 20 * 1000
-var increment int64 = 100
+var timeLeft int64 = 2 * 60 * 1000
+var increment int64 = 1000
 var moveTime int64 = NoValue
 var movesToGo int16 = 40
 var maxDepth uint8 = 100
@@ -25,10 +25,10 @@ func main() {
 	print("Initialization complete.")
 	print()
 
-	test_play_self()
+	// test_play_self()
 	// test_play_human()
 
-	// test_benchmark()
+	test_benchmark()
 }
 
 func test_play_self() {
@@ -58,9 +58,9 @@ func test_play_human() {
 	game := game_from_opening("Start Position")
 	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
-		InfiniteTime,
+		timeLeft,
 		increment,
-		NoValue,
+		moveTime,
 		movesToGo,
 		maxDepth,
 		maxNodeCount,
