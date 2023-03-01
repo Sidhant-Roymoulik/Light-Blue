@@ -96,7 +96,7 @@ func (zobrist *_Zobrist) init() {
 // Get the unique random number corresponding to the piece type, piece color, and square
 // given.
 func (zobrist *_Zobrist) PieceNumber(pieceType, pieceColor uint8, sq uint8) uint64 {
-	return zobrist.pieceSqRand64[(uint16(pieceType-1)*2+uint16(pieceColor-1))*64+uint16(sq)]
+	return zobrist.pieceSqRand64[(uint16(pieceType-1)*2+uint16(pieceColor))*64+uint16(sq)]
 }
 
 // Get the unique random number corresponding to the en passant square
@@ -122,6 +122,7 @@ func (zobrist *_Zobrist) SideToMoveNumber() uint64 {
 func (zobrist *_Zobrist) GenHash(pos *chess.Position) (hash uint64) {
 	squares := pos.Board().SquareMap()
 	for square, piece := range squares {
+		// print(uint8(piece.Type()), uint8(piece.Color()), uint8(square))
 		hash ^= zobrist.PieceNumber(uint8(piece.Type()), uint8(piece.Color()), uint8(square))
 	}
 

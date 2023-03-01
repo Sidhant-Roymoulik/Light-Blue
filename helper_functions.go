@@ -71,3 +71,15 @@ func abs(x int) int {
 	}
 	return x
 }
+
+func FileOf(square uint8) uint8 {
+	return square % 8
+}
+
+func RankOf(square uint8) uint8 {
+	return square / 8
+}
+
+func isSqDark(square uint8) bool {
+	return (square/8+square%8)%2 == 0
+}

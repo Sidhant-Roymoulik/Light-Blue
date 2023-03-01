@@ -4,8 +4,8 @@ import (
 	"runtime"
 )
 
-var timeLeft int64 = 2 * 60 * 1000
-var increment int64 = 1000
+var timeLeft int64 = 10 * 1000
+var increment int64 = 100
 var moveTime int64 = NoValue
 var movesToGo int16 = 40
 var maxDepth uint8 = 100
@@ -15,6 +15,9 @@ func main() {
 	print("Running main...")
 	defer print("Finished main.")
 
+	InitBitboards()
+	InitEvalBitboards()
+	InitTables()
 	InitZobrist()
 
 	runtime.GOMAXPROCS(runtime.NumCPU())

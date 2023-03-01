@@ -1,27 +1,39 @@
 package main
 
 import (
+	"encoding/binary"
+
 	"github.com/Sidhant-Roymoulik/chess"
 )
+
+var score_mg = [2]int{}
+var score_eg = [2]int{}
 
 // -----------------------------------------------------------------------------
 // 		Bonuses + Penalties
 // -----------------------------------------------------------------------------
 
 const (
-	BishopPairBonusMG int = 22
-	BishopPairBonusEG int = 30
-
-	RookOrQueenOnSeventhBonusEG int = 23
-
-	RookOnOpenFileBonusMG     int = 23
-	RookOnSemiOpenFileBonusMG int = 10
-
 	IsolatedPawnPenatlyMG int = 17
 	IsolatedPawnPenatlyEG int = 6
 
 	DoubledPawnPenatlyMG int = 1
 	DoubledPawnPenatlyEG int = 16
+
+	KnightOnOutpostBonusMG int = 27
+	KnightOnOutpostBonusEG int = 18
+
+	BishopOutPostBonusMG int = 10
+	BishopOutPostBonusEG int = 14
+
+	RookOrQueenOnSeventhBonusEG int = 23
+
+	RookOnOpenFileBonusMG int = 23
+
+	BishopPairBonusMG int = 22
+	BishopPairBonusEG int = 30
+
+	SemiOpenFileNextToKingPenalty int = 4
 
 	TempoBonusMG int = 14
 
@@ -40,9 +52,41 @@ const (
 		KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
 )
 
-var SEVENTH_RANK = map[chess.Color]chess.Rank{
-	chess.White: chess.Rank7,
-	chess.Black: chess.Rank2,
+// -----------------------------------------------------------------------------
+// 		Bitboards
+// -----------------------------------------------------------------------------
+
+var DoubledPawnMasks [2][64]Bitboard
+var IsolatedPawnMasks [8]Bitboard
+var PassedPawnMasks [2][64]Bitboard
+var OutpostMasks [2][64]Bitboard
+
+type KingZone struct {
+	OuterRing Bitboard
+	InnerRing Bitboard
+}
+
+// -----------------------------------------------------------------------------
+// 		King Safety Stuff
+// -----------------------------------------------------------------------------
+
+var KingZones [2]KingZone
+var KingZonesMasks [64]KingZone
+var KingAttackPoints [2]int
+var KingAttackers [2]int
+
+var OuterRingAttackPoints = map[chess.PieceType]int{
+	chess.Queen:  1,
+	chess.Rook:   1,
+	chess.Bishop: 0,
+	chess.Knight: 1,
+}
+
+var InnerRingAttackPoints = map[chess.PieceType]int{
+	chess.Queen:  2,
+	chess.Rook:   3,
+	chess.Bishop: 4,
+	chess.Knight: 3,
 }
 
 // -----------------------------------------------------------------------------
@@ -51,7 +95,6 @@ var SEVENTH_RANK = map[chess.Color]chess.Rank{
 
 // piece value map
 var PVM_MG = map[chess.PieceType]int{
-	chess.King:   20000,
 	chess.Queen:  921,
 	chess.Rook:   441,
 	chess.Bishop: 346,
@@ -60,7 +103,6 @@ var PVM_MG = map[chess.PieceType]int{
 }
 
 var PVM_EG = map[chess.PieceType]int{
-	chess.King:   20000,
 	chess.Queen:  886,
 	chess.Rook:   478,
 	chess.Bishop: 268,
@@ -68,12 +110,28 @@ var PVM_EG = map[chess.PieceType]int{
 	chess.Pawn:   106,
 }
 
+var Mobility_MG = map[chess.PieceType]int{
+	chess.Queen:  0,
+	chess.Rook:   3,
+	chess.Bishop: 3,
+	chess.Knight: 5,
+	chess.Pawn:   0,
+}
+
+var Mobility_EG = map[chess.PieceType]int{
+	chess.Queen:  6,
+	chess.Rook:   2,
+	chess.Bishop: 3,
+	chess.Knight: 2,
+	chess.Pawn:   0,
+}
+
 // -----------------------------------------------------------------------------
 // 		Piece Square Table Stuff
 // -----------------------------------------------------------------------------
 
-var FLIP = map[chess.Color][]int{
-	chess.White: {
+var FLIP = [2][64]int{
+	{
 		56, 57, 58, 59, 60, 61, 62, 63,
 		48, 49, 50, 51, 52, 53, 54, 55,
 		40, 41, 42, 43, 44, 45, 46, 47,
@@ -83,7 +141,7 @@ var FLIP = map[chess.Color][]int{
 		8, 9, 10, 11, 12, 13, 14, 15,
 		0, 1, 2, 3, 4, 5, 6, 7,
 	},
-	chess.Black: {
+	{
 		0, 1, 2, 3, 4, 5, 6, 7,
 		8, 9, 10, 11, 12, 13, 14, 15,
 		16, 17, 18, 19, 20, 21, 22, 23,
@@ -93,6 +151,11 @@ var FLIP = map[chess.Color][]int{
 		48, 49, 50, 51, 52, 53, 54, 55,
 		56, 57, 58, 59, 60, 61, 62, 63,
 	},
+}
+
+var FlipRank = [2][8]uint8{
+	{Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8},
+	{Rank8, Rank7, Rank6, Rank5, Rank4, Rank3, Rank2, Rank1},
 }
 
 var PST_MG = map[chess.PieceType][]int{
@@ -221,83 +284,395 @@ var PST_EG = map[chess.PieceType][]int{
 	},
 }
 
+var PassedPawn_MG = [64]int{
+	0, 0, 0, 0, 0, 0, 0, 0,
+	45, 52, 42, 43, 28, 34, 19, 9,
+	48, 43, 43, 30, 24, 31, 12, 2,
+	28, 17, 13, 10, 10, 19, 6, 1,
+	14, 0, -9, -7, -13, -7, 9, 16,
+	5, 3, -3, -14, -3, 10, 13, 19,
+	8, 9, 2, -8, -3, 8, 16, 9,
+	0, 0, 0, 0, 0, 0, 0, 0,
+}
+
+var PassedPawn_EG = [64]int{
+	0, 0, 0, 0, 0, 0, 0, 0,
+	77, 74, 63, 53, 59, 60, 72, 77,
+	91, 83, 66, 40, 30, 61, 67, 84,
+	55, 52, 42, 35, 30, 34, 56, 52,
+	29, 26, 21, 18, 17, 19, 34, 30,
+	8, 6, 5, 1, 1, -1, 14, 7,
+	2, 3, -4, 0, -2, -1, 7, 6,
+	0, 0, 0, 0, 0, 0, 0, 0,
+}
+
 // -----------------------------------------------------------------------------
 // 		Position Evaluation Function
 // -----------------------------------------------------------------------------
 
 // Best Evaluation
 func eval_pos(position *chess.Position, ply int) int {
-	// faster than doing two comparisons
-	if position.Status() != chess.NoMethod {
-		if position.Status() == chess.Checkmate {
-			return -CHECKMATE_VALUE + ply
-		}
+	data, err := position.Board().MarshalBinary()
+	if err != nil {
+		print(err)
 		return 0
 	}
 
-	var OCC map[chess.Color]map[chess.PieceType]int = map[chess.Color]map[chess.PieceType]int{
-		chess.White: {
-			chess.King:   0,
-			chess.Queen:  0,
-			chess.Rook:   0,
-			chess.Bishop: 0,
-			chess.Knight: 0,
-			chess.Pawn:   0,
+	var pieces = [2]map[chess.PieceType]Bitboard{
+		{
+			chess.King:   Bitboard(binary.BigEndian.Uint64(data[:8])),
+			chess.Queen:  Bitboard(binary.BigEndian.Uint64(data[8:16])),
+			chess.Rook:   Bitboard(binary.BigEndian.Uint64(data[16:24])),
+			chess.Bishop: Bitboard(binary.BigEndian.Uint64(data[24:32])),
+			chess.Knight: Bitboard(binary.BigEndian.Uint64(data[32:40])),
+			chess.Pawn:   Bitboard(binary.BigEndian.Uint64(data[40:48])),
 		},
-		chess.Black: {
-			chess.King:   0,
-			chess.Queen:  0,
-			chess.Rook:   0,
-			chess.Bishop: 0,
-			chess.Knight: 0,
-			chess.Pawn:   0,
-		},
-	}
-
-	var P_FILE map[chess.Color]map[chess.File]int = map[chess.Color]map[chess.File]int{
-		chess.White: {
-			chess.FileA: 0,
-			chess.FileB: 0,
-			chess.FileC: 0,
-			chess.FileD: 0,
-			chess.FileE: 0,
-			chess.FileF: 0,
-			chess.FileG: 0,
-			chess.FileH: 0,
-		},
-		chess.Black: {
-			chess.FileA: 0,
-			chess.FileB: 0,
-			chess.FileC: 0,
-			chess.FileD: 0,
-			chess.FileE: 0,
-			chess.FileF: 0,
-			chess.FileG: 0,
-			chess.FileH: 0,
+		{
+			chess.King:   Bitboard(binary.BigEndian.Uint64(data[48:56])),
+			chess.Queen:  Bitboard(binary.BigEndian.Uint64(data[56:64])),
+			chess.Rook:   Bitboard(binary.BigEndian.Uint64(data[64:72])),
+			chess.Bishop: Bitboard(binary.BigEndian.Uint64(data[72:80])),
+			chess.Knight: Bitboard(binary.BigEndian.Uint64(data[80:88])),
+			chess.Pawn:   Bitboard(binary.BigEndian.Uint64(data[88:96])),
 		},
 	}
 
-	squares := position.Board().SquareMap()
+	// Draw by Insufficient Material
+	if is_draw(pieces) {
+		return 0
+	}
 
-	for square, piece := range squares {
-		OCC[piece.Color()][piece.Type()]++
+	var sides = [2]Bitboard{
+		chess.White: 0,
+		chess.Black: 0,
+	}
 
-		if piece.Type() == chess.Pawn {
-			P_FILE[piece.Color()][square.File()]++
+	for i := 0; i < 12; i++ {
+		if i < 6 {
+			sides[chess.White] |= Bitboard(
+				binary.BigEndian.Uint64(data[i*8 : i*8+8]),
+			)
+		} else {
+			sides[chess.Black] |= Bitboard(
+				binary.BigEndian.Uint64(data[i*8 : i*8+8]),
+			)
 		}
 	}
 
-	white_pawns := OCC[chess.White][chess.Pawn]
-	white_knights := OCC[chess.White][chess.Knight]
-	white_bishops := OCC[chess.White][chess.Bishop]
-	white_rooks := OCC[chess.White][chess.Rook]
-	white_queens := OCC[chess.White][chess.Queen]
+	score_mg = [2]int{0, 0}
+	score_eg = [2]int{0, 0}
 
-	black_pawns := OCC[chess.Black][chess.Pawn]
-	black_knights := OCC[chess.Black][chess.Knight]
-	black_bishops := OCC[chess.Black][chess.Bishop]
-	black_rooks := OCC[chess.Black][chess.Rook]
-	black_queens := OCC[chess.Black][chess.Queen]
+	turn := position.Turn()
+
+	squares := position.Board().SquareMap()
+	all_bb := sides[chess.White] | sides[chess.Black]
+
+	for all_bb != 0 {
+		square := all_bb.PopBit()
+		piece := squares[chess.Square(square)]
+		color := piece.Color()
+		if color == chess.NoColor {
+			print(square)
+		}
+
+		score_mg[color] += PVM_MG[piece.Type()]
+		score_mg[color] += PST_MG[piece.Type()][FLIP[color][square]]
+
+		score_eg[color] += PVM_EG[piece.Type()]
+		score_eg[color] += PST_EG[piece.Type()][FLIP[color][square]]
+
+		switch piece.Type() {
+		case chess.Pawn:
+			ally := pieces[color][chess.Pawn]
+			enemy := pieces[color^1][chess.Pawn]
+
+			// Isolated Pawns
+			if IsolatedPawnMasks[FileOf(square)]&ally != 0 {
+				score_mg[color] -= IsolatedPawnPenatlyMG
+				score_eg[color] -= IsolatedPawnPenatlyEG
+			}
+
+			// Doubled Pawns
+			if DoubledPawnMasks[color][square]&ally != 0 {
+				score_mg[color] -= DoubledPawnPenatlyMG
+				score_eg[color] -= DoubledPawnPenatlyEG
+			} else {
+				// Check for Passed Pawn only if not Doubled
+				if PassedPawnMasks[color][square]&enemy == 0 {
+					score_mg[color] += PassedPawn_MG[FLIP[color][square]]
+					score_eg[color] += PassedPawn_EG[FLIP[color][square]]
+				}
+			}
+
+		case chess.Knight:
+			ally := pieces[color][chess.Pawn]
+			enemy := pieces[color^1][chess.Pawn]
+
+			// Check for Outposts
+			if OutpostMasks[color][square]&enemy == 0 &&
+				PawnAttacks[color][square]&ally != 0 &&
+				FlipRank[color][RankOf(square)] >= Rank5 {
+				score_mg[color] += KnightOnOutpostBonusMG
+				score_eg[color] += KnightOnOutpostBonusEG
+			}
+
+			moves := KnightMoves[square] & ^sides[color]
+
+			// Mobility Bonus
+			safe_moves := moves
+
+			for enemy != 0 {
+				square = enemy.PopBit()
+				safe_moves &= ^PawnAttacks[color^1][square]
+			}
+
+			mobility := safe_moves.CountBits()
+			score_mg[color] += (mobility - 4) * Mobility_MG[chess.Knight]
+			score_eg[color] += (mobility - 4) * Mobility_EG[chess.Knight]
+
+			// King Attacks
+			outer_ring_attacks := moves & KingZones[color^1].OuterRing
+			inner_ring_attacks := moves & KingZones[color^1].InnerRing
+
+			if outer_ring_attacks > 0 || inner_ring_attacks > 0 {
+				KingAttackers[color]++
+				KingAttackPoints[color] += outer_ring_attacks.CountBits() *
+					OuterRingAttackPoints[chess.Knight]
+				KingAttackPoints[color] += inner_ring_attacks.CountBits() *
+					InnerRingAttackPoints[chess.Knight]
+			}
+
+		case chess.Bishop:
+			ally := pieces[color][chess.Pawn]
+			enemy := pieces[color^1][chess.Pawn]
+
+			// Check for Outposts
+			if OutpostMasks[color][square]&enemy == 0 &&
+				PawnAttacks[color][square]&ally != 0 &&
+				FlipRank[color][RankOf(square)] >= Rank5 {
+				score_mg[color] += BishopOutPostBonusMG
+				score_eg[color] += BishopOutPostBonusEG
+			}
+
+			// Mobility Bonus
+			full_bb := sides[color] | sides[color^1]
+			moves := GenBishopMoves(square, full_bb) & ^sides[color]
+
+			mobility := moves.CountBits()
+			score_mg[color] += (mobility - 7) * Mobility_MG[chess.Bishop]
+			score_eg[color] += (mobility - 7) * Mobility_EG[chess.Bishop]
+
+			// King Attacks
+			outer_ring_attacks := moves & KingZones[color^1].OuterRing
+			inner_ring_attacks := moves & KingZones[color^1].InnerRing
+
+			if outer_ring_attacks > 0 || inner_ring_attacks > 0 {
+				KingAttackers[color]++
+				KingAttackPoints[color] += outer_ring_attacks.CountBits() *
+					OuterRingAttackPoints[chess.Bishop]
+				KingAttackPoints[color] += inner_ring_attacks.CountBits() *
+					InnerRingAttackPoints[chess.Bishop]
+			}
+
+		case chess.Rook:
+			// Seventh Rank Bonus
+			enemy_king := pieces[color^1][chess.King].Msb()
+			if FlipRank[color][RankOf(square)] == Rank7 &&
+				FlipRank[color][RankOf(enemy_king)] >= Rank7 {
+				score_eg[color] += RookOrQueenOnSeventhBonusEG
+			}
+
+			// Open File Bonus
+			pawns := pieces[color][chess.Pawn] | pieces[color^1][chess.Pawn]
+			if MaskFile[FileOf(square)]&pawns == 0 {
+				score_mg[color] += RookOnOpenFileBonusMG
+			}
+
+			// Mobility Bonus
+			full_bb := sides[color] | sides[color^1]
+			moves := GenRookMoves(square, full_bb) & ^sides[color]
+
+			mobility := moves.CountBits()
+			score_mg[color] += (mobility - 7) * Mobility_MG[chess.Rook]
+			score_eg[color] += (mobility - 7) * Mobility_EG[chess.Rook]
+
+			// King Attacks
+			outer_ring_attacks := moves & KingZones[color^1].OuterRing
+			inner_ring_attacks := moves & KingZones[color^1].InnerRing
+
+			if outer_ring_attacks > 0 || inner_ring_attacks > 0 {
+				KingAttackers[color]++
+				KingAttackPoints[color] += outer_ring_attacks.CountBits() *
+					OuterRingAttackPoints[chess.Rook]
+				KingAttackPoints[color] += inner_ring_attacks.CountBits() *
+					InnerRingAttackPoints[chess.Rook]
+			}
+
+		case chess.Queen:
+			// Seventh Rank Bonus
+			enemy_king := pieces[color^1][chess.King].Msb()
+			if FlipRank[color][RankOf(square)] == Rank7 &&
+				FlipRank[color][RankOf(enemy_king)] >= Rank7 {
+				score_eg[color] += RookOrQueenOnSeventhBonusEG
+			}
+
+			// Mobility Bonus
+			full_bb := sides[color] | sides[color^1]
+			moves := (GenBishopMoves(square, full_bb) |
+				GenRookMoves(square, full_bb)) & ^sides[color]
+
+			mobility := moves.CountBits()
+			score_mg[color] += (mobility - 14) * Mobility_MG[chess.Queen]
+			score_eg[color] += (mobility - 14) * Mobility_EG[chess.Queen]
+
+			// King Attacks
+			outer_ring_attacks := moves & KingZones[color^1].OuterRing
+			inner_ring_attacks := moves & KingZones[color^1].InnerRing
+
+			if outer_ring_attacks > 0 || inner_ring_attacks > 0 {
+				KingAttackers[color]++
+				KingAttackPoints[color] += outer_ring_attacks.CountBits() *
+					OuterRingAttackPoints[chess.Queen]
+				KingAttackPoints[color] += inner_ring_attacks.CountBits() *
+					InnerRingAttackPoints[chess.Queen]
+			}
+		}
+
+	}
+
+	if pieces[chess.White][chess.Bishop].CountBits() == 2 {
+		score_mg[chess.White] += BishopPairBonusMG
+		score_eg[chess.White] += BishopPairBonusEG
+	}
+	if pieces[chess.Black][chess.Bishop].CountBits() == 2 {
+		score_mg[chess.Black] += BishopPairBonusMG
+		score_eg[chess.Black] += BishopPairBonusEG
+	}
+
+	evalKing(
+		&pieces, chess.White, pieces[chess.White][chess.King].Msb(),
+	)
+	evalKing(
+		&pieces, chess.Black, pieces[chess.Black][chess.King].Msb(),
+	)
+
+	score_mg[turn] += TempoBonusMG
+
+	// Tapered Evaluation
+	eval_mg := score_mg[turn] - score_mg[turn^1]
+	eval_eg := score_eg[turn] - score_eg[turn^1]
+
+	phase := TotalPhase
+	phase -= (pieces[chess.White][chess.Pawn].CountBits() +
+		pieces[chess.Black][chess.Pawn].CountBits()) * PawnPhase
+	phase -= (pieces[chess.White][chess.Knight].CountBits() +
+		pieces[chess.Black][chess.Knight].CountBits()) * KnightPhase
+	phase -= (pieces[chess.White][chess.Bishop].CountBits() +
+		pieces[chess.Black][chess.Bishop].CountBits()) * BishopPhase
+	phase -= (pieces[chess.White][chess.Rook].CountBits() +
+		pieces[chess.Black][chess.Rook].CountBits()) * RookPhase
+	phase -= (pieces[chess.White][chess.Queen].CountBits() +
+		pieces[chess.Black][chess.Queen].CountBits()) * QueenPhase
+	phase = (phase*256 + (TotalPhase / 2)) / TotalPhase
+
+	eval := ((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256
+
+	// Check if position is likely a draw
+	if is_drawish(pieces) {
+		eval /= DrawishScaleFactor
+	}
+
+	return eval
+}
+
+func is_draw(pieces [2]map[chess.PieceType]Bitboard) bool {
+	white_knights := pieces[chess.White][chess.Knight].CountBits()
+	white_bishops := pieces[chess.White][chess.Bishop].CountBits()
+
+	black_knights := pieces[chess.Black][chess.Knight].CountBits()
+	black_bishops := pieces[chess.Black][chess.Bishop].CountBits()
+
+	pawns := pieces[chess.White][chess.Pawn].CountBits() +
+		pieces[chess.Black][chess.Pawn].CountBits()
+	knights := white_knights + black_knights
+	bishops := white_bishops + black_bishops
+	rooks := pieces[chess.White][chess.Rook].CountBits() +
+		pieces[chess.Black][chess.Rook].CountBits()
+	queens := pieces[chess.White][chess.Queen].CountBits() +
+		pieces[chess.Black][chess.Queen].CountBits()
+
+	minors := knights + bishops
+	majors := rooks + queens
+
+	if pawns+majors+minors == 0 {
+		return true
+	} else if majors+pawns == 0 {
+		if minors == 1 {
+			return true
+		} else if minors == 2 {
+			if white_knights == 1 && black_knights == 1 {
+				return true
+			} else if white_bishops == 1 && black_bishops == 1 {
+				white_bishop_square := pieces[chess.White][chess.Bishop].Msb()
+				black_bishop_square := pieces[chess.Black][chess.Bishop].Msb()
+
+				return isSqDark(white_bishop_square) ==
+					isSqDark(black_bishop_square)
+			}
+		}
+	}
+
+	return false
+}
+
+func evalKing(
+	pieces *[2]map[chess.PieceType]Bitboard,
+	color chess.Color,
+	sq uint8,
+) {
+
+	enemyPoints := KingAttackPoints[color^1]
+
+	// Evaluate semi-open files adjacent to the enemy king
+	kingFile := MaskFile[FileOf(sq)]
+	ally := (*pieces)[color][chess.Pawn]
+
+	leftFile := ((kingFile & ClearFile[FileA]) << 1)
+	rightFile := ((kingFile & ClearFile[FileH]) >> 1)
+
+	if kingFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	if leftFile != 0 && leftFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	if rightFile != 0 && rightFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	// Take all the king saftey points collected for the enemy,
+	// and see what kind of penatly we should get.
+	penatly := (enemyPoints * enemyPoints) / 4
+	if KingAttackers[color^1] >= 2 && (*pieces)[color^1][chess.Queen] != 0 {
+		score_mg[color] -= penatly
+	}
+}
+
+func is_drawish(pieces [2]map[chess.PieceType]Bitboard) bool {
+
+	white_pawns := pieces[chess.White][chess.Pawn].CountBits()
+	white_knights := pieces[chess.White][chess.Knight].CountBits()
+	white_bishops := pieces[chess.White][chess.Bishop].CountBits()
+	white_rooks := pieces[chess.White][chess.Rook].CountBits()
+	white_queens := pieces[chess.White][chess.Queen].CountBits()
+
+	black_pawns := pieces[chess.Black][chess.Pawn].CountBits()
+	black_knights := pieces[chess.Black][chess.Knight].CountBits()
+	black_bishops := pieces[chess.Black][chess.Bishop].CountBits()
+	black_rooks := pieces[chess.Black][chess.Rook].CountBits()
+	black_queens := pieces[chess.Black][chess.Queen].CountBits()
 
 	pawns := white_pawns + black_pawns
 	knights := white_knights + black_knights
@@ -313,67 +688,50 @@ func eval_pos(position *chess.Position, ply int) int {
 
 	all := majors + minors
 
-	// Draw by Insufficient Material
-	if all == 0 {
-		return 0
-	} else if majors+pawns == 0 {
-		if minors == 1 {
-			return 0
-		} else if minors == 2 {
-			if white_knights == 1 && black_knights == 1 {
-				return 0
-			} else if white_bishops == 1 && black_bishops == 1 {
-				return 0
-			}
-		}
-	}
-
-	// Check if position is likely a draw
-	drawish := false
 	if pawns == 0 {
 		if all == 2 {
 			// KQ v KQ
 			if white_queens == 1 && black_queens == 1 {
-				drawish = true
+				return true
 			}
 			// KR v KR
 			if white_rooks == 1 && black_rooks == 1 {
-				drawish = true
+				return true
 			}
 			// KN v KN
 			// KN v KB
 			// KB v KB
 			if white_minors == 1 && black_minors == 1 {
-				drawish = true
+				return true
 			}
 			// KNN v K
 			if white_knights == 2 || black_knights == 2 {
-				drawish = true
+				return true
 			}
 		} else if all == 3 {
 			// KQ v KRR
 			if (white_queens == 1 && black_rooks == 2) ||
 				(black_queens == 1 && white_rooks == 2) {
-				drawish = true
+				return true
 			}
 
 			// KQ v KBB
 			if (white_queens == 1 && black_bishops == 2) ||
 				(black_queens == 1 && white_bishops == 2) {
-				drawish = true
+				return true
 			}
 
 			// KQ v KNN
 			if (white_queens == 1 && black_knights == 2) ||
 				(black_queens == 1 && white_knights == 2) {
-				drawish = true
+				return true
 			}
 
 			// KNN v KN
 			// KNN v KB
 			if (white_knights == 2 && black_minors == 1) ||
 				(black_knights == 2 && white_minors == 1) {
-				drawish = true
+				return true
 			}
 
 		} else if all == 4 {
@@ -381,108 +739,70 @@ func eval_pos(position *chess.Position, ply int) int {
 			// KRR v KRN
 			if (white_rooks == 2 && black_rooks == 1 && black_minors == 1) ||
 				(black_rooks == 2 && white_rooks == 1 && white_minors == 1) {
-				drawish = true
+				return true
 			}
 		}
 	}
 
-	var score_mg map[chess.Color]int = map[chess.Color]int{
-		chess.White: 0,
-		chess.Black: 0,
-	}
-	var score_eg map[chess.Color]int = map[chess.Color]int{
-		chess.White: 0,
-		chess.Black: 0,
-	}
+	return false
+}
 
-	turn := position.Turn()
-	other_turn := turn.Other()
-
-	valid_moves := position.ValidMoves()
-	other_valid_moves := position.NullMove().ValidMoves()
-
-	score_mg[turn] += len(valid_moves)
-	score_eg[turn] += len(valid_moves)
-	score_mg[other_turn] += len(other_valid_moves)
-	score_eg[other_turn] += len(other_valid_moves)
-
-	score_mg[turn] += TempoBonusMG
-
-	if OCC[chess.White][chess.Bishop] == 2 {
-		score_mg[chess.White] += BishopPairBonusMG
-		score_eg[chess.White] += BishopPairBonusEG
-	}
-	if OCC[chess.Black][chess.Bishop] == 2 {
-		score_mg[chess.Black] += BishopPairBonusMG
-		score_eg[chess.Black] += BishopPairBonusEG
+func InitEvalBitboards() {
+	for file := FileA; file <= FileH; file++ {
+		fileBB := MaskFile[file]
+		mask := (fileBB & ClearFile[FileA]) << 1
+		mask |= (fileBB & ClearFile[FileH]) >> 1
+		IsolatedPawnMasks[file] = mask
 	}
 
-	for square, piece := range squares {
-		var square_file chess.File = square.File()
-		var piece_color chess.Color = piece.Color()
-		var piece_type chess.PieceType = piece.Type()
+	for sq := 0; sq < 64; sq++ {
+		// Create king zones.
+		sqBB := SquareBB[sq]
+		zone := ((sqBB & ClearFile[FileH]) >> 1) | ((sqBB & (ClearFile[FileG] & ClearFile[FileH])) >> 2)
+		zone |= ((sqBB & ClearFile[FileA]) << 1) | ((sqBB & (ClearFile[FileB] & ClearFile[FileA])) << 2)
+		zone |= sqBB
 
-		score_mg[piece_color] += PVM_MG[piece_type]
-		score_mg[piece_color] += PST_MG[piece_type][FLIP[piece_color][square]]
+		zone |= ((zone >> 8) | (zone >> 16))
+		zone |= ((zone << 8) | (zone << 16))
 
-		score_eg[piece_color] += PVM_EG[piece_type]
-		score_eg[piece_color] += PST_EG[piece_type][FLIP[piece_color][square]]
+		KingZonesMasks[sq] = KingZone{OuterRing: zone & ^(KingMoves[sq] | sqBB), InnerRing: KingMoves[sq] | sqBB}
 
-		if piece_type == chess.Pawn {
-			if P_FILE[piece_color][square_file] > 1 {
-				score_mg[piece_color] -= DoubledPawnPenatlyMG
-				score_eg[piece_color] -= DoubledPawnPenatlyEG
-			}
+		file := FileOf(uint8(sq))
+		fileBB := MaskFile[file]
+		rank := int(RankOf(uint8(sq)))
 
-			var isIsolated bool = true
-			if square_file > chess.FileA &&
-				P_FILE[piece_color][square_file-1] > 0 {
-				isIsolated = false
-			}
-			if square_file < chess.FileH &&
-				P_FILE[piece_color][square_file+1] > 0 {
-				isIsolated = false
-			}
-			if isIsolated {
-				score_mg[piece_color] -= IsolatedPawnPenatlyMG
-				score_eg[piece_color] -= IsolatedPawnPenatlyEG
-			}
-		} else if piece_type == chess.Rook {
-			if P_FILE[piece_color][square_file] == 0 {
-				if P_FILE[piece_color.Other()][square_file] == 0 {
-					score_mg[piece_color] += RookOnOpenFileBonusMG
-				} else {
-					score_mg[piece_color] += RookOnSemiOpenFileBonusMG
-				}
-			}
-
-			if square.Rank() == SEVENTH_RANK[piece_color] {
-				score_eg[piece_color] += RookOrQueenOnSeventhBonusEG
-			}
-		} else if piece_type == chess.Queen {
-			if square.Rank() == SEVENTH_RANK[piece_color] {
-				score_eg[piece_color] += RookOrQueenOnSeventhBonusEG
-			}
+		// Create doubled pawns masks.
+		mask := fileBB
+		for r := 0; r <= rank; r++ {
+			mask &= ClearRank[r]
 		}
+		DoubledPawnMasks[chess.White][sq] = mask
+
+		mask = fileBB
+		for r := 7; r >= rank; r-- {
+			mask &= ClearRank[r]
+		}
+		DoubledPawnMasks[chess.Black][sq] = mask
+
+		// Passed pawn masks and outpost masks.
+		frontSpanMask := fileBB
+		frontSpanMask |= (fileBB & ClearFile[FileA]) << 1
+		frontSpanMask |= (fileBB & ClearFile[FileH]) >> 1
+
+		whiteFrontSpan := frontSpanMask
+		for r := 0; r <= rank; r++ {
+			whiteFrontSpan &= ClearRank[r]
+		}
+
+		PassedPawnMasks[chess.White][sq] = whiteFrontSpan
+		OutpostMasks[chess.White][sq] = whiteFrontSpan & ^fileBB
+
+		blackFrontSpan := frontSpanMask
+		for r := 7; r >= rank; r-- {
+			blackFrontSpan &= ClearRank[r]
+		}
+
+		PassedPawnMasks[chess.Black][sq] = blackFrontSpan
+		OutpostMasks[chess.Black][sq] = blackFrontSpan & ^fileBB
 	}
-
-	// Tapered Evaluation
-	eval_mg := score_mg[turn] - score_mg[other_turn]
-	eval_eg := score_eg[turn] - score_eg[other_turn]
-
-	phase := TotalPhase
-	phase -= pawns * PawnPhase
-	phase -= knights * KnightPhase
-	phase -= bishops * BishopPhase
-	phase -= rooks * RookPhase
-	phase -= queens * QueenPhase
-	phase = (phase*256 + (TotalPhase / 2)) / TotalPhase
-
-	eval := ((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256
-
-	if drawish {
-		eval /= DrawishScaleFactor
-	}
-
-	return eval
 }
