@@ -29,6 +29,7 @@ func (e *UCIEngine) uci() {
 	fmt.Print("option name Clear Hash type button\n")
 	fmt.Print("option name Clear History type button\n")
 	fmt.Print("option name Clear Killers type button\n")
+
 	// fmt.Print("option name Clear Counters type button\n")
 	// fmt.Print("option name UseBook type check default false\n")
 	// fmt.Print("option name BookPath type string default\n")
@@ -206,7 +207,7 @@ func (e *UCIEngine) loop() {
 		} else if strings.HasPrefix(command, "go") {
 			go e.search(command)
 		} else if strings.HasPrefix(command, "stop") {
-
+			e.engine.timer.ForceStop()
 		} else if command == "quit\n" {
 			e.quit()
 			break

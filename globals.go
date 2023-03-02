@@ -7,7 +7,7 @@ import "time"
 // -----------------------------------------------------------------------------
 
 const (
-	name   string = "Light Blue 1"
+	name   string = "Light Blue 0"
 	author string = "Sidhant Roymoulik"
 )
 
