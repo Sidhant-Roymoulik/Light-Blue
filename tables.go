@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"time"
-
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
@@ -177,23 +174,23 @@ func InitTables() {
 	}
 
 	// Generate rook and bishop magics and move tables.
-	fmt.Print("Finding rook and bishop magics....")
+	// fmt.Print("Finding rook and bishop magics....")
 	quit := make(chan bool)
 
 	// A simple spinning cursor animation while the magic numbers are being
 	// generated from scratch everytime the engine starts.
 	go func() {
-		phases := [4]string{"\\", "|", "/", "—"}
+		// phases := [4]string{"\\", "|", "/", "—"}
 		for {
 			select {
 			case <-quit:
-				fmt.Printf("\b%s", " ")
+				// fmt.Printf("\b%s", " ")
 				return
 			default:
-				for _, phase := range phases {
-					fmt.Printf("\b%s", phase)
-					time.Sleep(time.Duration(200) * time.Millisecond)
-				}
+				// for _, phase := range phases {
+				// 	fmt.Printf("\b%s", phase)
+				// 	time.Sleep(time.Duration(200) * time.Millisecond)
+				// }
 			}
 		}
 	}()
@@ -202,5 +199,5 @@ func InitTables() {
 	genBishopMagics()
 
 	quit <- true
-	fmt.Println("\nDone finding rook and bishop magics.")
+	// fmt.Println("\nDone finding rook and bishop magics.")
 }

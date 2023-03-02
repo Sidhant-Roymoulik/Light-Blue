@@ -44,6 +44,9 @@ type Engine interface {
 	resetCounters()
 	resetKillerMoves()
 	resetZobrist()
+	resizeTT(uint64, uint64)
+	clearTT()
+	uninitializeTT()
 	reset()
 	run(*chess.Position) (int, *chess.Move)
 }
@@ -203,17 +206,28 @@ func (engine *EngineClass) resetZobrist() {
 	engine.zobristHistoryPly = 0
 }
 
+func (engine *EngineClass) resizeTT(sizeInMB uint64, entrySize uint64) {
+	engine.tt.Resize(sizeInMB, entrySize)
+}
+
+func (engine *EngineClass) clearTT() {
+	engine.tt.Clear()
+}
+
+func (engine *EngineClass) uninitializeTT() {
+	engine.tt.Unitialize()
+}
+
 func (engine *EngineClass) reset() {
 	engine.max_ply = 0
-	engine.time_limit = TIME_LIMIT
-	engine.resetCounters()
-	engine.tt = TransTable[SearchEntry]{}
 	engine.age = 0
 	engine.prev_guess = 0
-	engine.resetKillerMoves()
 	engine.threads = runtime.GOMAXPROCS(0)
-	engine.resetZobrist()
 
+	engine.resetCounters()
+	engine.resetKillerMoves()
+	engine.resetZobrist()
 	engine.tt.Clear()
-	engine.tt.Resize(64, 16)
+
+	engine.resizeTT(DefaultTTSize, SearchEntrySize)
 }

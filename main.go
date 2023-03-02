@@ -12,8 +12,8 @@ var maxDepth uint8 = 100
 var maxNodeCount uint64 = 1000000000
 
 func main() {
-	print("Running main...")
-	defer print("Finished main.")
+	// print("Running main...")
+	// defer print("Finished main.")
 
 	InitBitboards()
 	InitEvalBitboards()
@@ -22,16 +22,18 @@ func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	print("Version", runtime.Version())
-	print("NumCPU", runtime.NumCPU())
-	print("GOMAXPROCS", runtime.GOMAXPROCS(0))
-	print("Initialization complete.")
-	print()
+	// print("Version", runtime.Version())
+	// print("NumCPU", runtime.NumCPU())
+	// print("GOMAXPROCS", runtime.GOMAXPROCS(0))
+	// print("Initialization complete.")
+	// print()
 
 	// test_play_self()
 	// test_play_human()
 
-	test_benchmark()
+	// test_benchmark()
+
+	run_uci()
 }
 
 func test_play_self() {
@@ -84,4 +86,9 @@ func test_benchmark() {
 	)
 	engines := []Engine{&engine_1}
 	benchmark_engines(engines, game_from_fen("rn1qkb1r/pp2pppp/5n2/3p1b2/3P4/2N1P3/PP3PPP/R1BQKBNR w KQkq - 0 1").Position())
+}
+
+func run_uci() {
+	uci_engine := &UCIEngine{}
+	uci_engine.loop()
 }

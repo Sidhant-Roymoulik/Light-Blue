@@ -10,7 +10,7 @@ A Chess Engine Built in Golang
  - [x] DFS
  - [x] Alpha-Beta Pruning
  - [x] Time Management
- - [ ] UCI Protocol
+ - [x] UCI Protocol
 
 ### S-Tier Upgrades
 
