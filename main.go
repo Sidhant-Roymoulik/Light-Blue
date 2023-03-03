@@ -28,12 +28,12 @@ func main() {
 	// print("Initialization complete.")
 	// print()
 
-	test_play_self()
+	// test_play_self()
 	// test_play_human()
 
 	// test_benchmark()
 
-	// run_uci()
+	run_uci()
 }
 
 func test_play_self() {
