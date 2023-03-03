@@ -22,7 +22,7 @@ func (e *UCIEngine) reset() {
 }
 
 func (e *UCIEngine) uci() {
-	fmt.Printf("\nid name %v\n", name)
+	fmt.Printf("id name %v\n", name)
 	fmt.Printf("id author %v\n", author)
 
 	fmt.Printf("\noption name Hash type spin default 64 min 1 max 32000\n")

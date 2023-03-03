@@ -198,6 +198,13 @@ func (engine *light_blue) minimax_start(
 		get_move(moves, i)
 		move := moves[i].move
 
+		// Bug with move gen where engine tries to castle when in check
+		if position.InCheck() &&
+			(move.HasTag(chess.KingSideCastle) ||
+				move.HasTag(chess.QueenSideCastle)) {
+			continue
+		}
+
 		// Generate new position
 		var new_position *chess.Position = position.Update(move)
 
@@ -414,6 +421,13 @@ func (engine *light_blue) pv_search(
 		// Pick move
 		get_move(moves, i)
 		move := moves[i].move
+
+		// Bug with move gen where engine tries to castle when in check
+		if inCheck &&
+			(move.HasTag(chess.KingSideCastle) ||
+				move.HasTag(chess.QueenSideCastle)) {
+			continue
+		}
 
 		// Futility Pruning
 		if canFutilityPrune &&
