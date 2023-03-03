@@ -44,6 +44,8 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 		} else {
 			engine = white
 		}
+
+		print("")
 		print("Depth:", engine.getDepth())
 		print("Best Move:", move.String())
 		if eval > MATE_CUTOFF {
@@ -55,9 +57,7 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 		}
 
 		print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-		print("Nodes explored:", engine.getNodesSearched())
-		print("Q-Nodes explored:", engine.getQNodesSearched())
-		print("Hashes Used:", engine.getHashesUsed())
+		engine.printSearchStats()
 		// print(game.FEN())
 		print(game.Position().Board().Draw())
 	}

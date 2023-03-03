@@ -31,9 +31,7 @@ func benchmark(ply int, engine Engine, pos *chess.Position) float64 {
 		print("Eval:", float32(eval*getMultiplier(pos.Turn() == chess.White))/100.0)
 	}
 	print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-	print("Nodes explored:", engine.getNodesSearched())
-	print("Q-Nodes explored:", engine.getQNodesSearched())
-	print("Hashes Used:", engine.getHashesUsed())
+	engine.printSearchStats()
 	print("END BENCHMARKING -")
 	print()
 

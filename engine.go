@@ -26,7 +26,11 @@ func new_light_blue() light_blue {
 				nodes_searched:   0,
 				q_nodes_searched: 0,
 				hashes_used:      0,
-				hashes_written:   0,
+				smp_pruned:       0,
+				nmp_pruned:       0,
+				razor_pruned:     0,
+				futility_pruned:  0,
+				iid_move_found:   0,
 			},
 			upgrades: EngineUpgrades{
 				move_ordering:                true,
@@ -174,6 +178,11 @@ func (engine *light_blue) minimax_start(
 	// Generate hash for position
 	var hash uint64 = Zobrist.GenHash(position)
 
+	// Initialize variables
+	var best_move *chess.Move = nil
+	var tt_flag = AlphaFlag
+	childPVLine := PVLine{}
+
 	// Sort Moves
 	moves := score_moves(
 		position.ValidMoves(),
@@ -181,11 +190,6 @@ func (engine *light_blue) minimax_start(
 		engine.killer_moves[0],
 		pvLine.getPVMove(),
 	)
-
-	// Initialize variables
-	var best_move *chess.Move = nil
-	var tt_flag = AlphaFlag
-	var childPVLine PVLine = PVLine{}
 
 	// Loop through moves
 	for i := 0; i < len(moves); i++ {
@@ -243,8 +247,6 @@ func (engine *light_blue) minimax_start(
 	if !engine.timer.IsStopped() {
 		var entry *SearchEntry = engine.tt.Store(hash, max_depth, engine.age)
 		entry.Set(hash, alpha, best_move, 0, max_depth, tt_flag, engine.age)
-
-		engine.counters.hashes_written++
 	}
 
 	return alpha
@@ -322,6 +324,7 @@ func (engine *light_blue) pv_search(
 		static_eval := eval_pos(position, ply)
 		eval_margin := StaticNullMovePruningBaseMargin * depth
 		if static_eval-eval_margin >= beta {
+			engine.counters.smp_pruned++
 			return static_eval - eval_margin
 		}
 	}
@@ -342,6 +345,7 @@ func (engine *light_blue) pv_search(
 		childPVLine.clear()
 
 		if eval >= beta && abs(eval) < MATE_CUTOFF {
+			engine.counters.nmp_pruned++
 			return beta
 		}
 	}
@@ -352,6 +356,7 @@ func (engine *light_blue) pv_search(
 		if static_eval+FutilityMargins[depth]*3 < alpha {
 			eval := engine.q_search(position, 0, alpha, beta, ply)
 			if eval < alpha {
+				engine.counters.razor_pruned++
 				return alpha
 			}
 		}
@@ -370,23 +375,24 @@ func (engine *light_blue) pv_search(
 	}
 
 	// Internal Iterative Deepening
-	if depth > IID_Depth_Limit &&
-		(isPVNode || entry.GetFlag() == BetaFlag) &&
-		tt_move == nil {
-		engine.pv_search(
-			position,
-			ply+1,
-			-beta,
-			-alpha,
-			max_depth-IID_Depth_Reduction,
-			&childPVLine,
-			do_null,
-		)
-		if len(childPVLine.Moves) > 0 {
-			tt_move = childPVLine.getPVMove()
-			childPVLine.clear()
-		}
-	}
+	// if depth > IID_Depth_Limit &&
+	// 	(isPVNode || entry.GetFlag() == BetaFlag) &&
+	// 	tt_move == nil {
+	// 	engine.pv_search(
+	// 		position,
+	// 		ply+1,
+	// 		-beta,
+	// 		-alpha,
+	// 		max_depth-IID_Depth_Reduction,
+	// 		&childPVLine,
+	// 		do_null,
+	// 	)
+	// 	if len(childPVLine.Moves) > 0 {
+	// 		engine.counters.iid_move_found++
+	// 		tt_move = childPVLine.getPVMove()
+	// 		childPVLine.clear()
+	// 	}
+	// }
 
 	// Sort Moves
 	moves := score_moves(
@@ -419,6 +425,7 @@ func (engine *light_blue) pv_search(
 		if canFutilityPrune &&
 			i > 0 &&
 			!is_q_move(move) {
+			engine.counters.futility_pruned++
 			continue
 		}
 
@@ -499,8 +506,6 @@ func (engine *light_blue) pv_search(
 		entry.Set(
 			hash, alpha, best_move, ply, depth, tt_flag, engine.age,
 		)
-
-		engine.counters.hashes_written++
 	}
 
 	return alpha

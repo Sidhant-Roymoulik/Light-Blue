@@ -34,6 +34,7 @@ type Engine interface {
 	getQNodesSearched() uint64
 	getHashesUsed() uint64
 	getTotalNodesSearched() uint64
+	printSearchStats()
 	// saveTTPosition(uint64, int, *chess.Move, int, int, uint8)
 	// probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
 	setBenchmarkMode(int)
@@ -68,7 +69,11 @@ type EngineCounters struct {
 	nodes_searched   uint64
 	q_nodes_searched uint64
 	hashes_used      uint64
-	hashes_written   uint64
+	smp_pruned       uint64
+	nmp_pruned       uint64
+	razor_pruned     uint64
+	futility_pruned  uint64
+	iid_move_found   uint64
 }
 
 // -----------------------------------------------------------------------------
@@ -140,6 +145,18 @@ func (engine *EngineClass) getTotalNodesSearched() uint64 {
 	return engine.counters.nodes_searched + engine.counters.q_nodes_searched
 }
 
+func (engine *EngineClass) printSearchStats() {
+	print("Nodes explored:", engine.getNodesSearched())
+	print("Q-Nodes explored:", engine.getQNodesSearched())
+	print("Hashes Used:", engine.getHashesUsed())
+	print("")
+	print("SMP Prunes:", engine.counters.smp_pruned)
+	print("NMP Prunes:", engine.counters.nmp_pruned)
+	print("Razor Prunes:", engine.counters.razor_pruned)
+	print("Futility Prunes:", engine.counters.futility_pruned)
+	print("IID Moves Found:", engine.counters.iid_move_found)
+}
+
 // func (engine *EngineClass) saveTTPosition(hash uint64, score int, best *chess.Move, ply int, depth int, flag uint8) {
 // 	if !engine.time_up() && best != nil {
 // 		var entry *SearchEntry = engine.tt.Store(hash, depth, engine.age)
@@ -192,6 +209,11 @@ func (engine *EngineClass) resetCounters() {
 	engine.counters.nodes_searched = 0
 	engine.counters.q_nodes_searched = 0
 	engine.counters.hashes_used = 0
+	engine.counters.smp_pruned = 0
+	engine.counters.nmp_pruned = 0
+	engine.counters.razor_pruned = 0
+	engine.counters.futility_pruned = 0
+	engine.counters.iid_move_found = 0
 }
 
 func (engine *EngineClass) resetKillerMoves() {

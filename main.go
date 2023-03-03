@@ -4,8 +4,8 @@ import (
 	"runtime"
 )
 
-var timeLeft int64 = 10 * 1000
-var increment int64 = 100
+var timeLeft int64 = 60 * 1000
+var increment int64 = 0
 var moveTime int64 = NoValue
 var movesToGo int16 = 40
 var maxDepth uint8 = 100
@@ -28,12 +28,12 @@ func main() {
 	// print("Initialization complete.")
 	// print()
 
-	// test_play_self()
+	test_play_self()
 	// test_play_human()
 
 	// test_benchmark()
 
-	run_uci()
+	// run_uci()
 }
 
 func test_play_self() {
