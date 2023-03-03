@@ -25,7 +25,7 @@ A Chess Engine Built in Golang
  - [x] Principal-Variation + Null-Window Search
  - [x] Aspiration Window
  - [x] Null Move Pruning
- - [ ] Openings
+ - [x] Openings
  - [ ] Tablebases
 
 ### B-Tier Upgrades

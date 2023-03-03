@@ -4,16 +4,24 @@ import (
 	"bufio"
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Sidhant-Roymoulik/chess"
 )
 
 type UCIEngine struct {
 	engine light_blue
-	pos    *chess.Position
+	game   *chess.Game
+
+	OpeningBook map[uint64][]PolyglotEntry
+
+	OptionUseBook       bool
+	OptionBookPath      string
+	OptionBookMoveDelay int
 }
 
 func (e *UCIEngine) reset() {
@@ -29,11 +37,11 @@ func (e *UCIEngine) uci() {
 	fmt.Print("option name Clear Hash type button\n")
 	fmt.Print("option name Clear History type button\n")
 	fmt.Print("option name Clear Killers type button\n")
-
 	// fmt.Print("option name Clear Counters type button\n")
-	// fmt.Print("option name UseBook type check default false\n")
-	// fmt.Print("option name BookPath type string default\n")
-	// fmt.Print("option name BookMoveDelay type spin default 2 min 0 max 10\n")
+
+	fmt.Print("option name UseBook type check default false\n")
+	fmt.Print("option name BookPath type string default\n")
+	fmt.Print("option name BookMoveDelay type spin default 2 min 0 max 10\n")
 
 	fmt.Print("\nAvailable UCI commands:\n")
 
@@ -49,7 +57,7 @@ func (e *UCIEngine) uci() {
 	fmt.Print("\n\t* infinite")
 
 	fmt.Print("\n    * stop\n    * quit\n\n")
-	fmt.Printf("uciok\n\n")
+	fmt.Printf("uciok\n")
 }
 
 func (e *UCIEngine) setOption(command string) {
@@ -85,6 +93,26 @@ func (e *UCIEngine) setOption(command string) {
 		e.engine.resetZobrist()
 	case "Clear Killers":
 		e.engine.resetKillerMoves()
+	case "UseBook":
+		if value == "true" {
+			e.OptionUseBook = true
+		} else if value == "false" {
+			e.OptionUseBook = false
+		}
+	case "BookPath":
+		var err error
+		e.OpeningBook, err = LoadPolyglotFile(value)
+
+		if err == nil {
+			fmt.Println("Opening book loaded...")
+		} else {
+			fmt.Println("Failed to load opening book...")
+		}
+	case "BookMoveDelay":
+		size, err := strconv.Atoi(value)
+		if err == nil {
+			e.OptionBookMoveDelay = size
+		}
 	}
 }
 
@@ -104,33 +132,51 @@ func (e *UCIEngine) position(command string) {
 		args = strings.Join(remaining_args[6:], " ")
 	}
 
-	position := game_from_fen(fen).Position()
-	e.engine.Add_Zobrist_History(Zobrist.GenHash(position))
-	e.pos = position
+	e.game = game_from_fen(fen)
+	e.engine.Add_Zobrist_History(Zobrist.GenHash(e.game.Position()))
 
 	if strings.HasPrefix(args, "moves ") {
 		args = strings.TrimSuffix(strings.TrimPrefix(args, "moves"), " ")
 		if args != "" {
 			for _, smove := range strings.Fields(args) {
-				move, err := chess.UCINotation{}.Decode(position, smove)
+				move, err := chess.UCINotation{}.Decode(
+					e.game.Position(), smove,
+				)
 				if err != nil {
 					panic(err)
 				}
-				position = position.Update(move)
-				e.engine.Add_Zobrist_History(Zobrist.GenHash(position))
-				e.pos = position
+				e.game.Move(move)
+				e.engine.Add_Zobrist_History(Zobrist.GenHash(e.game.Position()))
 			}
 		}
 	}
 }
 
 func (e *UCIEngine) search(command string) {
+	if e.OptionUseBook {
+		if entries, ok := e.OpeningBook[GenPolyglotHash(e.game.Position())]; ok {
+			// To allow opening variety, randomly select a move from an entry matching
+			// the current position.
+			entry := entries[rand.Intn(len(entries))]
+			move, err := chess.UCINotation{}.Decode(e.game.Position(), entry.Move)
+			if err != nil {
+				panic(err)
+			}
+
+			// if inter.Search.Pos.MoveIsPseduoLegal(move) {
+			time.Sleep(time.Duration(e.OptionBookMoveDelay) * time.Second)
+			fmt.Printf("bestmove %v\n", move)
+			return
+			// }
+		}
+	}
+
 	command = strings.TrimPrefix(command, "go")
 	command = strings.TrimPrefix(command, " ")
 	fields := strings.Fields(command)
 
 	colorPrefix := "b"
-	if e.pos.Turn() == chess.White {
+	if e.game.Position().Turn() == chess.White {
 		colorPrefix = "w"
 	}
 
@@ -171,7 +217,7 @@ func (e *UCIEngine) search(command string) {
 	)
 
 	// Report the best move found by the engine to the GUI.
-	_, bestMove := e.engine.run(e.pos)
+	_, bestMove := e.engine.run(e.game.Position())
 	fmt.Printf("bestmove %v\n", bestMove)
 }
 
