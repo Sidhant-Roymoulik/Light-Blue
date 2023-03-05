@@ -271,7 +271,7 @@ func (engine *light_blue) pv_search(
 	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
 		engine.timer.ForceStop()
 	}
-	if (engine.getTotalNodesSearched() & 1023) == 0 {
+	if (engine.getTotalNodesSearched() & TIMER_CHECK) == 0 {
 		engine.timer.CheckIfTimeIsUp()
 	}
 
@@ -539,7 +539,7 @@ func (engine *light_blue) q_search(
 	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
 		engine.timer.ForceStop()
 	}
-	if (engine.getTotalNodesSearched() & 1023) == 0 {
+	if (engine.getTotalNodesSearched() & TIMER_CHECK) == 0 {
 		engine.timer.CheckIfTimeIsUp()
 	}
 
