@@ -36,7 +36,7 @@ const (
 	CHECKMATE_VALUE int           = 1000000
 	MATE_CUTOFF     int           = CHECKMATE_VALUE / 2
 	MAX_DEPTH       int           = 100
-	TIMER_CHECK     uint64        = (1 << 8) - 1
+	TIMER_CHECK     uint64        = (1 << 3) - 1
 
 	WINDOW_VALUE_TIGHT int = 25
 	WINDOW_VALUE       int = 100

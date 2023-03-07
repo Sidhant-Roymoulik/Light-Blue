@@ -413,7 +413,6 @@ func (engine *light_blue) pv_search(
 	// Initialize variables
 	var best_move *chess.Move = nil
 	var tt_flag = AlphaFlag
-	var bSearchPv bool = true
 
 	// Loop through moves
 	for i := 0; i < len(moves); i++ {
@@ -437,7 +436,7 @@ func (engine *light_blue) pv_search(
 
 		new_eval := 0
 
-		if bSearchPv {
+		if i == 0 {
 			// Principal-Variation Search
 			new_eval = -engine.pv_search(
 				new_position,
@@ -491,7 +490,6 @@ func (engine *light_blue) pv_search(
 
 			alpha = new_eval
 			tt_flag = ExactFlag
-			bSearchPv = false
 			pvLine.update(move, childPVLine)
 		}
 

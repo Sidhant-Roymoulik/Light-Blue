@@ -47,6 +47,6 @@ func benchmark_range(plymin int, plymax int, engine Engine, pos *chess.Position)
 func benchmark_engines(engines []Engine, pos *chess.Position) {
 	for _, engine := range engines {
 		engine.reset()
-		benchmark_range(1, 6, engine, pos)
+		benchmark_range(1, 8, engine, pos)
 	}
 }
