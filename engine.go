@@ -319,59 +319,57 @@ func (engine *light_blue) pv_search(
 		return tt_eval
 	}
 
-	// Static Move Pruning
-	if !inCheck && !isPVNode && abs(beta) < MATE_CUTOFF {
+	if !inCheck && !isPVNode {
 		static_eval := eval_pos(position, ply)
-		eval_margin := StaticNullMovePruningBaseMargin * depth
-		if static_eval-eval_margin >= beta {
-			engine.counters.smp_pruned++
-			return static_eval - eval_margin
-		}
-	}
 
-	// Null Move Pruning
-	if do_null && !inCheck && !isPVNode && depth >= NMR_Depth_Limit {
-		R := 3 + depth/6
-		eval := -engine.pv_search(
-			position.NullMove(),
-			ply+1,
-			-beta,
-			-beta+1,
-			max_depth-R,
-			&childPVLine,
-			false,
-		)
-
-		childPVLine.clear()
-
-		if eval >= beta && abs(eval) < MATE_CUTOFF {
-			engine.counters.nmp_pruned++
-			return beta
-		}
-	}
-
-	// Razoring
-	if depth <= 2 && !inCheck && !isPVNode {
-		static_eval := eval_pos(position, ply)
-		if static_eval+FutilityMargins[depth]*3 < alpha {
-			eval := engine.q_search(position, 0, alpha, beta, ply)
-			if eval < alpha {
-				engine.counters.razor_pruned++
-				return alpha
+		// Static Move Pruning
+		if abs(beta) < MATE_CUTOFF {
+			// static_eval := eval_pos(position, ply)
+			eval_margin := StaticNullMovePruningBaseMargin * depth
+			if static_eval-eval_margin >= beta {
+				engine.counters.smp_pruned++
+				return static_eval - eval_margin
 			}
 		}
-	}
 
-	// Futility Pruning
-	if depth <= FutilityPruningDepthLimit &&
-		!inCheck &&
-		!isPVNode &&
-		alpha < MATE_CUTOFF &&
-		beta < MATE_CUTOFF {
-		static_eval := eval_pos(position, ply)
-		eval_margin := FutilityMargins[depth]
+		// Null Move Pruning
+		if do_null && depth >= NMR_Depth_Limit {
+			R := 3 + depth/6
+			eval := -engine.pv_search(
+				position.NullMove(),
+				ply+1,
+				-beta,
+				-beta+1,
+				max_depth-R,
+				&childPVLine,
+				false,
+			)
+			childPVLine.clear()
+			if eval >= beta && abs(eval) < MATE_CUTOFF {
+				engine.counters.nmp_pruned++
+				return beta
+			}
+		}
 
-		canFutilityPrune = static_eval+eval_margin <= alpha
+		// Razoring
+		if depth <= 2 {
+			// static_eval := eval_pos(position, ply)
+			if static_eval+FutilityMargins[depth]*3 < alpha {
+				eval := engine.q_search(position, 0, alpha, beta, ply)
+				if eval < alpha {
+					engine.counters.razor_pruned++
+					return alpha
+				}
+			}
+		}
+
+		// Futility Pruning
+		if depth <= FutilityPruningDepthLimit &&
+			alpha < MATE_CUTOFF &&
+			beta < MATE_CUTOFF {
+			// static_eval := eval_pos(position, ply)
+			canFutilityPrune = static_eval+FutilityMargins[depth] <= alpha
+		}
 	}
 
 	// Internal Iterative Deepening
