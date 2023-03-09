@@ -229,19 +229,21 @@ func (engine *light_blue) pv_search(
 	// Check for draw by 50-move rule but let mate-in-1 trump it
 	possibleMateInOne := inCheck && depth == 1
 	if !isRoot &&
-		(position.HalfMoveClock() >= 100 && !possibleMateInOne) ||
-		engine.Is_Draw_By_Repetition(hash) {
-		entry := engine.tt.Probe(
-			engine.zobristHistory[engine.zobristHistoryPly-4],
-		)
-		_, _, tt_move := entry.Get(
-			engine.zobristHistory[engine.zobristHistoryPly-4],
-			ply,
-			depth,
-			-math.MaxInt,
-			math.MaxInt,
-		)
-		pvLine.update(tt_move, childPVLine)
+		((position.HalfMoveClock() >= 100 && !possibleMateInOne) ||
+			engine.Is_Draw_By_Repetition(hash)) {
+		if engine.zobristHistoryPly >= 4 {
+			entry := engine.tt.Probe(
+				engine.zobristHistory[engine.zobristHistoryPly-4],
+			)
+			_, _, tt_move := entry.Get(
+				engine.zobristHistory[engine.zobristHistoryPly-4],
+				ply,
+				depth,
+				-math.MaxInt,
+				math.MaxInt,
+			)
+			pvLine.update(tt_move, childPVLine)
+		}
 		return 0
 	}
 

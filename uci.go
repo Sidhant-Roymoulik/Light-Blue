@@ -16,6 +16,7 @@ import (
 type UCIEngine struct {
 	engine light_blue
 	game   *chess.Game
+	moves  uint16
 
 	OpeningBook map[uint64][]PolyglotEntry
 
@@ -133,6 +134,7 @@ func (e *UCIEngine) position(command string) {
 	}
 
 	e.game = game_from_fen(fen)
+	e.engine.zobristHistoryPly = e.moves
 	e.engine.Add_Zobrist_History(Zobrist.GenHash(e.game.Position()))
 
 	if strings.HasPrefix(args, "moves ") {
@@ -150,6 +152,8 @@ func (e *UCIEngine) position(command string) {
 			}
 		}
 	}
+
+	e.moves++
 }
 
 func (e *UCIEngine) search(command string) {
