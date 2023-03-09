@@ -69,6 +69,7 @@ type EngineCounters struct {
 	nodes_searched   uint64
 	q_nodes_searched uint64
 	hashes_used      uint64
+	check_extensions uint64
 	smp_pruned       uint64
 	nmp_pruned       uint64
 	razor_pruned     uint64
@@ -150,10 +151,11 @@ func (engine *EngineClass) printSearchStats() {
 	print("Q-Nodes explored:", engine.getQNodesSearched())
 	print("Hashes Used:", engine.getHashesUsed())
 	print("")
+	print("Check Extensions:", engine.counters.check_extensions)
 	print("SMP Prunes:", engine.counters.smp_pruned)
-	print("NMP Prunes:", engine.counters.nmp_pruned)
-	print("Razor Prunes:", engine.counters.razor_pruned)
 	print("Futility Prunes:", engine.counters.futility_pruned)
+	print("Razor Prunes:", engine.counters.razor_pruned)
+	print("NMP Prunes:", engine.counters.nmp_pruned)
 	print("IID Moves Found:", engine.counters.iid_move_found)
 }
 
@@ -209,6 +211,7 @@ func (engine *EngineClass) resetCounters() {
 	engine.counters.nodes_searched = 0
 	engine.counters.q_nodes_searched = 0
 	engine.counters.hashes_used = 0
+	engine.counters.check_extensions = 0
 	engine.counters.smp_pruned = 0
 	engine.counters.nmp_pruned = 0
 	engine.counters.razor_pruned = 0
