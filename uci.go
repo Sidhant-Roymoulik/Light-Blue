@@ -251,6 +251,7 @@ func (e *UCIEngine) loop() {
 		} else if strings.HasPrefix(command, "setoption") {
 			e.setOption(command)
 		} else if strings.HasPrefix(command, "ucinewgame") {
+			e.moves = 0
 			e.engine.reset()
 		} else if strings.HasPrefix(command, "position") {
 			e.position(command)
