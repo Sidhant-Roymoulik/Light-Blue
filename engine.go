@@ -231,19 +231,15 @@ func (engine *light_blue) pv_search(
 	if !isRoot &&
 		((position.HalfMoveClock() >= 100 && !possibleMateInOne) ||
 			engine.Is_Draw_By_Repetition(hash)) {
-		if engine.zobristHistoryPly >= 4 {
-			entry := engine.tt.Probe(
-				engine.zobristHistory[engine.zobristHistoryPly-4],
-			)
-			_, _, tt_move := entry.Get(
-				engine.zobristHistory[engine.zobristHistoryPly-4],
-				ply,
-				depth,
-				-math.MaxInt,
-				math.MaxInt,
-			)
-			pvLine.update(tt_move, childPVLine)
-		}
+		entry := engine.tt.Probe(hash)
+		_, _, tt_move := entry.Get(
+			hash,
+			ply,
+			depth,
+			-math.MaxInt,
+			math.MaxInt,
+		)
+		pvLine.update(tt_move, childPVLine)
 		return 0
 	}
 
