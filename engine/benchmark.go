@@ -1,25 +1,25 @@
-package main
+package engine
 
 import (
 	"time"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 // Adapted from https://github.com/0hq/antikythera/blob/main/benchmark.go#L24
 
-func benchmark(ply int, engine Engine, pos *chess.Position) float64 {
-	engine.setBenchmarkMode(ply)
-	engine.resetZobrist()
+func benchmark(ply int, e Engine, pos *chess.Position) float64 {
+	e.setBenchmarkMode(ply)
+	e.resetZobrist()
 
-	print("BEGIN BENCHMARKING -", engine.getName())
+	print("BEGIN BENCHMARKING -", e.getName())
 	// print("Starting at time", time.Now())
 
 	start := time.Now()
-	eval, move := engine.run(pos)
+	eval, move := e.run(pos)
 	elapsed := time.Since(start)
 
-	print("Depth:", engine.getDepth())
+	print("Depth:", e.getDepth())
 
 	// print("Complete at time", time.Now())
 	print("Best Move:", move.String())
@@ -31,22 +31,22 @@ func benchmark(ply int, engine Engine, pos *chess.Position) float64 {
 		print("Eval:", float32(eval*getMultiplier(pos.Turn() == chess.White))/100.0)
 	}
 	print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-	engine.printSearchStats()
+	e.printSearchStats()
 	print("END BENCHMARKING -")
 	print()
 
 	return elapsed.Seconds()
 }
 
-func benchmark_range(plymin int, plymax int, engine Engine, pos *chess.Position) {
+func benchmark_range(plymin int, plymax int, e Engine, pos *chess.Position) {
 	for i := plymin; i <= plymax; i++ {
-		benchmark(i, engine, pos)
+		benchmark(i, e, pos)
 	}
 }
 
 func benchmark_engines(engines []Engine, pos *chess.Position) {
-	for _, engine := range engines {
-		engine.reset()
-		benchmark_range(1, 8, engine, pos)
+	for _, e := range engines {
+		e.reset()
+		benchmark_range(1, 8, e, pos)
 	}
 }

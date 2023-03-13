@@ -1,9 +1,9 @@
-package main
+package engine
 
 import (
 	"fmt"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 func print(str ...any) {

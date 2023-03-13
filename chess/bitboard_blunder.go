@@ -1,4 +1,4 @@
-package main
+package chess
 
 // bitboard.go contains the implementation of a bitboard datatype for the engine.
 
@@ -8,9 +8,9 @@ import (
 )
 
 // A type representing a bitboard, which is a unsigned 64-bit number. Blunder's
-// bitboard representation has the most significant bit being A1 and the least
-// signficant bit being H8.
-type Bitboard uint64
+// bitboard representation has the most significant bit being A1 and the least signficanrt
+// bit being H8.
+// type Bitboard uint64
 
 // A constant representing a bitboard with every square set and every square
 // empty.

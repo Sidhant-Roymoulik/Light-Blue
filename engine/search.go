@@ -1,11 +1,11 @@
-package main
+package engine
 
 import (
 	"fmt"
 	"math"
 	"time"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 // Upgrades over Version 4.1:
@@ -55,7 +55,9 @@ func new_light_blue() light_blue {
 	}
 }
 
-func (engine *light_blue) run(position *chess.Position) (best_eval int, best_move *chess.Move) {
+func (engine *light_blue) run(position *chess.Position) (
+	best_eval int, best_move *chess.Move,
+) {
 	engine.resetCounters()
 	engine.resetKillerMoves()
 

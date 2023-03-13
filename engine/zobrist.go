@@ -1,6 +1,8 @@
-package main
+package engine
 
-import "github.com/Sidhant-Roymoulik/chess"
+import (
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
+)
 
 // Borrowed from https://github.com/algerbrex/blunder/blob/main/engine/zobrist.go
 // Thanks Algerbrex, I didn't want to have to deal with debugging my own implementation.

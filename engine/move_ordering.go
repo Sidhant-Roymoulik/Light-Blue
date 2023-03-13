@@ -1,8 +1,6 @@
-package main
+package engine
 
-import (
-	"github.com/Sidhant-Roymoulik/chess"
-)
+import "github.com/Sidhant-Roymoulik/Light-Blue/chess"
 
 // -----------------------------------------------------------------------------
 // 		Constants

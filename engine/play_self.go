@@ -1,9 +1,9 @@
-package main
+package engine
 
 import (
 	"time"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 func play_self(white Engine, black Engine, game *chess.Game) {

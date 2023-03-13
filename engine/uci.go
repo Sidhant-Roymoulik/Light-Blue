@@ -1,4 +1,4 @@
-package main
+package engine
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 type UCIEngine struct {

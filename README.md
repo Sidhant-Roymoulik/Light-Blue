@@ -43,7 +43,6 @@ A UCI-Compatible Chess Engine Built in Golang
 ### C-Tier Upgrades
 
  - [x] Killer Moves Heuristic
- - [ ] MTD(f) & MTD(bi)
  - [ ] Anything Else I Can Think Of
 
 ---

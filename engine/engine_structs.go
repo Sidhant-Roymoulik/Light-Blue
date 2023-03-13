@@ -1,11 +1,11 @@
-package main
+package engine
 
 import (
 	"fmt"
 	"runtime"
 	"time"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 type EngineClass struct {
@@ -35,8 +35,8 @@ type Engine interface {
 	getHashesUsed() uint64
 	getTotalNodesSearched() uint64
 	printSearchStats()
-	// saveTTPosition(uint64, int, *chess.Move, int, int, uint8)
-	// probeTTPosition(uint64, int, int, int, int) (int, bool, *chess.Move)
+	// saveTTPosition(uint64, int, *Move, int, int, uint8)
+	// probeTTPosition(uint64, int, int, int, int) (int, bool, *Move)
 	setBenchmarkMode(int)
 	addKillerMove(*chess.Move, int)
 	Add_Zobrist_History(uint64)
@@ -159,7 +159,7 @@ func (engine *EngineClass) printSearchStats() {
 	print("IID Moves Found:", engine.counters.iid_move_found)
 }
 
-// func (engine *EngineClass) saveTTPosition(hash uint64, score int, best *chess.Move, ply int, depth int, flag uint8) {
+// func (engine *EngineClass) saveTTPosition(hash uint64, score int, best *Move, ply int, depth int, flag uint8) {
 // 	if !engine.time_up() && best != nil {
 // 		var entry *SearchEntry = engine.tt.Store(hash, depth, engine.age)
 // 		entry.Set(hash, score, best, ply, depth, flag, engine.age)
@@ -167,7 +167,7 @@ func (engine *EngineClass) printSearchStats() {
 // 	}
 // }
 
-// func (engine *EngineClass) probeTTPosition(hash uint64, ply int, depth int, alpha int, beta int) (int, bool, *chess.Move) {
+// func (engine *EngineClass) probeTTPosition(hash uint64, ply int, depth int, alpha int, beta int) (int, bool, *Move) {
 // 	var entry *SearchEntry = engine.tt.Probe(hash)
 // 	var tt_eval, should_use, tt_move = entry.Get(hash, 0, depth, alpha, beta)
 // 	return tt_eval, should_use, tt_move

@@ -1,9 +1,9 @@
-package main
+package engine
 
 import (
 	"encoding/binary"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 var score_mg = [2]int{}
@@ -56,14 +56,14 @@ const (
 // 		Bitboards
 // -----------------------------------------------------------------------------
 
-var DoubledPawnMasks [2][64]Bitboard
-var IsolatedPawnMasks [8]Bitboard
-var PassedPawnMasks [2][64]Bitboard
-var OutpostMasks [2][64]Bitboard
+var DoubledPawnMasks [2][64]chess.Bitboard
+var IsolatedPawnMasks [8]chess.Bitboard
+var PassedPawnMasks [2][64]chess.Bitboard
+var OutpostMasks [2][64]chess.Bitboard
 
 type KingZone struct {
-	OuterRing Bitboard
-	InnerRing Bitboard
+	OuterRing chess.Bitboard
+	InnerRing chess.Bitboard
 }
 
 // -----------------------------------------------------------------------------
@@ -153,9 +153,27 @@ var FLIP = [2][64]int{
 	},
 }
 
-var FlipRank = [2][8]uint8{
-	{Rank1, Rank2, Rank3, Rank4, Rank5, Rank6, Rank7, Rank8},
-	{Rank8, Rank7, Rank6, Rank5, Rank4, Rank3, Rank2, Rank1},
+var FlipRank = [2][8]chess.Rank{
+	{
+		chess.Rank1,
+		chess.Rank2,
+		chess.Rank3,
+		chess.Rank4,
+		chess.Rank5,
+		chess.Rank6,
+		chess.Rank7,
+		chess.Rank8,
+	},
+	{
+		chess.Rank8,
+		chess.Rank7,
+		chess.Rank6,
+		chess.Rank5,
+		chess.Rank4,
+		chess.Rank3,
+		chess.Rank2,
+		chess.Rank1,
+	},
 }
 
 var PST_MG = map[chess.PieceType][]int{
@@ -318,22 +336,22 @@ func eval_pos(position *chess.Position, ply int) int {
 		return 0
 	}
 
-	var pieces = [2]map[chess.PieceType]Bitboard{
+	var pieces = [2]map[chess.PieceType]chess.Bitboard{
 		{
-			chess.King:   Bitboard(binary.BigEndian.Uint64(data[:8])),
-			chess.Queen:  Bitboard(binary.BigEndian.Uint64(data[8:16])),
-			chess.Rook:   Bitboard(binary.BigEndian.Uint64(data[16:24])),
-			chess.Bishop: Bitboard(binary.BigEndian.Uint64(data[24:32])),
-			chess.Knight: Bitboard(binary.BigEndian.Uint64(data[32:40])),
-			chess.Pawn:   Bitboard(binary.BigEndian.Uint64(data[40:48])),
+			chess.King:   chess.Bitboard(binary.BigEndian.Uint64(data[:8])),
+			chess.Queen:  chess.Bitboard(binary.BigEndian.Uint64(data[8:16])),
+			chess.Rook:   chess.Bitboard(binary.BigEndian.Uint64(data[16:24])),
+			chess.Bishop: chess.Bitboard(binary.BigEndian.Uint64(data[24:32])),
+			chess.Knight: chess.Bitboard(binary.BigEndian.Uint64(data[32:40])),
+			chess.Pawn:   chess.Bitboard(binary.BigEndian.Uint64(data[40:48])),
 		},
 		{
-			chess.King:   Bitboard(binary.BigEndian.Uint64(data[48:56])),
-			chess.Queen:  Bitboard(binary.BigEndian.Uint64(data[56:64])),
-			chess.Rook:   Bitboard(binary.BigEndian.Uint64(data[64:72])),
-			chess.Bishop: Bitboard(binary.BigEndian.Uint64(data[72:80])),
-			chess.Knight: Bitboard(binary.BigEndian.Uint64(data[80:88])),
-			chess.Pawn:   Bitboard(binary.BigEndian.Uint64(data[88:96])),
+			chess.King:   chess.Bitboard(binary.BigEndian.Uint64(data[48:56])),
+			chess.Queen:  chess.Bitboard(binary.BigEndian.Uint64(data[56:64])),
+			chess.Rook:   chess.Bitboard(binary.BigEndian.Uint64(data[64:72])),
+			chess.Bishop: chess.Bitboard(binary.BigEndian.Uint64(data[72:80])),
+			chess.Knight: chess.Bitboard(binary.BigEndian.Uint64(data[80:88])),
+			chess.Pawn:   chess.Bitboard(binary.BigEndian.Uint64(data[88:96])),
 		},
 	}
 
@@ -342,18 +360,18 @@ func eval_pos(position *chess.Position, ply int) int {
 		return 0
 	}
 
-	var sides = [2]Bitboard{
+	var sides = [2]chess.Bitboard{
 		chess.White: 0,
 		chess.Black: 0,
 	}
 
 	for i := 0; i < 12; i++ {
 		if i < 6 {
-			sides[chess.White] |= Bitboard(
+			sides[chess.White] |= chess.Bitboard(
 				binary.BigEndian.Uint64(data[i*8 : i*8+8]),
 			)
 		} else {
-			sides[chess.Black] |= Bitboard(
+			sides[chess.Black] |= chess.Bitboard(
 				binary.BigEndian.Uint64(data[i*8 : i*8+8]),
 			)
 		}
@@ -411,12 +429,12 @@ func eval_pos(position *chess.Position, ply int) int {
 			// Check for Outposts
 			if OutpostMasks[color][square]&enemy == 0 &&
 				PawnAttacks[color][square]&ally != 0 &&
-				FlipRank[color][RankOf(square)] >= Rank5 {
+				FlipRank[color][RankOf(square)] >= chess.Rank5 {
 				score_mg[color] += KnightOnOutpostBonusMG
 				score_eg[color] += KnightOnOutpostBonusEG
 			}
 
-			moves := KnightMoves[square] & ^sides[color]
+			moves := chess.BBKnightMoves[square] & ^sides[color]
 
 			// Mobility Bonus
 			safe_moves := moves
@@ -449,14 +467,14 @@ func eval_pos(position *chess.Position, ply int) int {
 			// Check for Outposts
 			if OutpostMasks[color][square]&enemy == 0 &&
 				PawnAttacks[color][square]&ally != 0 &&
-				FlipRank[color][RankOf(square)] >= Rank5 {
+				FlipRank[color][RankOf(square)] >= chess.Rank5 {
 				score_mg[color] += BishopOutPostBonusMG
 				score_eg[color] += BishopOutPostBonusEG
 			}
 
 			// Mobility Bonus
 			full_bb := sides[color] | sides[color^1]
-			moves := GenBishopMoves(square, full_bb) & ^sides[color]
+			moves := chess.DiaAttack(full_bb, chess.Square(square)) & ^sides[color]
 
 			mobility := moves.CountBits()
 			score_mg[color] += (mobility - 7) * Mobility_MG[chess.Bishop]
@@ -477,8 +495,8 @@ func eval_pos(position *chess.Position, ply int) int {
 		case chess.Rook:
 			// Seventh Rank Bonus
 			enemy_king := pieces[color^1][chess.King].Msb()
-			if FlipRank[color][RankOf(square)] == Rank7 &&
-				FlipRank[color][RankOf(enemy_king)] >= Rank7 {
+			if FlipRank[color][RankOf(square)] == chess.Rank7 &&
+				FlipRank[color][RankOf(enemy_king)] >= chess.Rank7 {
 				score_eg[color] += RookOrQueenOnSeventhBonusEG
 			}
 
@@ -490,7 +508,7 @@ func eval_pos(position *chess.Position, ply int) int {
 
 			// Mobility Bonus
 			full_bb := sides[color] | sides[color^1]
-			moves := GenRookMoves(square, full_bb) & ^sides[color]
+			moves := chess.HvAttack(full_bb, chess.Square(square)) & ^sides[color]
 
 			mobility := moves.CountBits()
 			score_mg[color] += (mobility - 7) * Mobility_MG[chess.Rook]
@@ -511,15 +529,15 @@ func eval_pos(position *chess.Position, ply int) int {
 		case chess.Queen:
 			// Seventh Rank Bonus
 			enemy_king := pieces[color^1][chess.King].Msb()
-			if FlipRank[color][RankOf(square)] == Rank7 &&
-				FlipRank[color][RankOf(enemy_king)] >= Rank7 {
+			if FlipRank[color][RankOf(square)] == chess.Rank7 &&
+				FlipRank[color][RankOf(enemy_king)] >= chess.Rank7 {
 				score_eg[color] += RookOrQueenOnSeventhBonusEG
 			}
 
 			// Mobility Bonus
 			full_bb := sides[color] | sides[color^1]
-			moves := (GenBishopMoves(square, full_bb) |
-				GenRookMoves(square, full_bb)) & ^sides[color]
+			moves := (chess.DiaAttack(full_bb, chess.Square(square)) |
+				chess.HvAttack(full_bb, chess.Square(square))) & ^sides[color]
 
 			mobility := moves.CountBits()
 			score_mg[color] += (mobility - 14) * Mobility_MG[chess.Queen]
@@ -585,7 +603,42 @@ func eval_pos(position *chess.Position, ply int) int {
 	return eval
 }
 
-func is_draw(pieces [2]map[chess.PieceType]Bitboard) bool {
+func evalKing(
+	pieces *[2]map[chess.PieceType]chess.Bitboard,
+	color chess.Color,
+	sq uint8,
+) {
+
+	enemyPoints := KingAttackPoints[color^1]
+
+	// Evaluate semi-open files adjacent to the enemy king
+	kingFile := MaskFile[FileOf(sq)]
+	ally := (*pieces)[color][chess.Pawn]
+
+	leftFile := ((kingFile & ClearFile[FileA]) << 1)
+	rightFile := ((kingFile & ClearFile[FileH]) >> 1)
+
+	if kingFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	if leftFile != 0 && leftFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	if rightFile != 0 && rightFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	// Take all the king saftey points collected for the enemy,
+	// and see what kind of penatly we should get.
+	penatly := (enemyPoints * enemyPoints) / 4
+	if KingAttackers[color^1] >= 2 && (*pieces)[color^1][chess.Queen] != 0 {
+		score_mg[color] -= penatly
+	}
+}
+
+func is_draw(pieces [2]map[chess.PieceType]chess.Bitboard) bool {
 	white_knights := pieces[chess.White][chess.Knight].CountBits()
 	white_bishops := pieces[chess.White][chess.Bishop].CountBits()
 
@@ -625,42 +678,7 @@ func is_draw(pieces [2]map[chess.PieceType]Bitboard) bool {
 	return false
 }
 
-func evalKing(
-	pieces *[2]map[chess.PieceType]Bitboard,
-	color chess.Color,
-	sq uint8,
-) {
-
-	enemyPoints := KingAttackPoints[color^1]
-
-	// Evaluate semi-open files adjacent to the enemy king
-	kingFile := MaskFile[FileOf(sq)]
-	ally := (*pieces)[color][chess.Pawn]
-
-	leftFile := ((kingFile & ClearFile[FileA]) << 1)
-	rightFile := ((kingFile & ClearFile[FileH]) >> 1)
-
-	if kingFile&ally == 0 {
-		enemyPoints += SemiOpenFileNextToKingPenalty
-	}
-
-	if leftFile != 0 && leftFile&ally == 0 {
-		enemyPoints += SemiOpenFileNextToKingPenalty
-	}
-
-	if rightFile != 0 && rightFile&ally == 0 {
-		enemyPoints += SemiOpenFileNextToKingPenalty
-	}
-
-	// Take all the king saftey points collected for the enemy,
-	// and see what kind of penatly we should get.
-	penatly := (enemyPoints * enemyPoints) / 4
-	if KingAttackers[color^1] >= 2 && (*pieces)[color^1][chess.Queen] != 0 {
-		score_mg[color] -= penatly
-	}
-}
-
-func is_drawish(pieces [2]map[chess.PieceType]Bitboard) bool {
+func is_drawish(pieces [2]map[chess.PieceType]chess.Bitboard) bool {
 
 	white_pawns := pieces[chess.White][chess.Pawn].CountBits()
 	white_knights := pieces[chess.White][chess.Knight].CountBits()
@@ -757,7 +775,7 @@ func InitEvalBitboards() {
 
 	for sq := 0; sq < 64; sq++ {
 		// Create king zones.
-		sqBB := SquareBB[sq]
+		sqBB := chess.SquareBB[sq]
 		zone := ((sqBB & ClearFile[FileH]) >> 1) | ((sqBB & (ClearFile[FileG] & ClearFile[FileH])) >> 2)
 		zone |= ((sqBB & ClearFile[FileA]) << 1) | ((sqBB & (ClearFile[FileB] & ClearFile[FileA])) << 2)
 		zone |= sqBB

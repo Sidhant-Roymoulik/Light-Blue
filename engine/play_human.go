@@ -1,13 +1,13 @@
-package main
+package engine
 
 import (
 	"time"
 
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
-func play_human(engine Engine, human Engine, game *chess.Game) {
-	engine.reset()
+func play_human(e Engine, human Engine, game *chess.Game) {
+	e.reset()
 
 	print("Starting Human vs Engine Game", "\n")
 
@@ -16,9 +16,9 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 
 	if human_white {
 		white = human
-		black = engine
+		black = e
 	} else {
-		white = engine
+		white = e
 		black = human
 	}
 
@@ -48,8 +48,8 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 			panic(err)
 		}
 
-		if (game.Position().Turn() == chess.Black && engine == white) || (game.Position().Turn() == chess.White && engine == black) {
-			print("Depth:", engine.getDepth())
+		if (game.Position().Turn() == chess.Black && e == white) || (game.Position().Turn() == chess.White && e == black) {
+			print("Depth:", e.getDepth())
 			print("Best Move:", move.String())
 			if eval > 100000 {
 				print("Eval: Mate in", (CHECKMATE_VALUE-eval+1)/2)
@@ -59,9 +59,9 @@ func play_human(engine Engine, human Engine, game *chess.Game) {
 				print("Eval:", float32(-1*eval*getMultiplier(game.Position().Turn() == chess.White))/100.0)
 			}
 			print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-			print("Nodes explored:", engine.getNodesSearched())
-			print("Q-Nodes explored:", engine.getQNodesSearched())
-			print("Hashes Used:", engine.getHashesUsed())
+			print("Nodes explored:", e.getNodesSearched())
+			print("Q-Nodes explored:", e.getQNodesSearched())
+			print("Hashes Used:", e.getHashesUsed())
 			// print(game.FEN())
 		}
 		print(game.Position().Board().Draw())

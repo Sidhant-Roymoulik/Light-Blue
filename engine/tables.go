@@ -1,7 +1,7 @@
-package main
+package engine
 
 import (
-	"github.com/Sidhant-Roymoulik/chess"
+	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
 // tables.go contains various precomputed tables used in the engine.
@@ -35,17 +35,17 @@ const (
 	West  uint8 = 1
 )
 
-var ClearRank = [8]Bitboard{}
-var ClearFile = [8]Bitboard{}
-var MaskRank = [8]Bitboard{}
-var MaskFile = [8]Bitboard{}
+var ClearRank = [8]chess.Bitboard{}
+var ClearFile = [8]chess.Bitboard{}
+var MaskRank = [8]chess.Bitboard{}
+var MaskFile = [8]chess.Bitboard{}
 
-var KingMoves = [64]Bitboard{}
-var KnightMoves = [64]Bitboard{}
-var PawnAttacks = [2][64]Bitboard{}
-var PawnPushes = [2][64]Bitboard{}
+var KingMoves = [64]chess.Bitboard{}
+var KnightMoves = [64]chess.Bitboard{}
+var PawnAttacks = [2][64]chess.Bitboard{}
+var PawnPushes = [2][64]chess.Bitboard{}
 
-var MaskDiagonal = [15]Bitboard{
+var MaskDiagonal = [15]chess.Bitboard{
 	0x80,
 	0x8040,
 	0x804020,
@@ -63,7 +63,7 @@ var MaskDiagonal = [15]Bitboard{
 	0x100000000000000,
 }
 
-var MaskAntidiagonal = [15]Bitboard{
+var MaskAntidiagonal = [15]chess.Bitboard{
 	0x1,
 	0x102,
 	0x10204,
@@ -85,8 +85,8 @@ func InitTables() {
 	// Generate useful masking lookup tables.
 
 	for i := uint8(0); i < 8; i++ {
-		emptyBB := EmptyBB
-		fullBB := FullBB
+		emptyBB := chess.EmptyBB
+		fullBB := chess.FullBB
 
 		for j := i; j <= 63; j += 8 {
 			emptyBB.SetBit(j)
@@ -98,8 +98,8 @@ func InitTables() {
 	}
 
 	for i := uint8(0); i <= 56; i += 8 {
-		emptyBB := EmptyBB
-		fullBB := FullBB
+		emptyBB := chess.EmptyBB
+		fullBB := chess.FullBB
 
 		for j := i; j < i+8; j++ {
 			emptyBB.SetBit(j)
@@ -113,7 +113,7 @@ func InitTables() {
 	// Generate non-slider move lookup tables.
 
 	for sq := 0; sq < 64; sq++ {
-		sqBB := SquareBB[sq]
+		sqBB := chess.SquareBB[sq]
 		sqBBClippedHFile := sqBB & ClearFile[FileH]
 		sqBBClippedAFile := sqBB & ClearFile[FileA]
 		sqBBClippedHGFile := sqBB & ClearFile[FileH] & ClearFile[FileG]
@@ -172,32 +172,4 @@ func InitTables() {
 		PawnAttacks[chess.White][sq] = whitePawnRightAttack | whitePawnLeftAttack
 		PawnAttacks[chess.Black][sq] = blackPawnRightAttack | blackPawnLeftAttack
 	}
-
-	// Generate rook and bishop magics and move tables.
-	// fmt.Print("Finding rook and bishop magics....")
-	quit := make(chan bool)
-
-	// A simple spinning cursor animation while the magic numbers are being
-	// generated from scratch everytime the engine starts.
-	go func() {
-		// phases := [4]string{"\\", "|", "/", "—"}
-		for {
-			select {
-			case <-quit:
-				// fmt.Printf("\b%s", " ")
-				return
-			default:
-				// for _, phase := range phases {
-				// 	fmt.Printf("\b%s", phase)
-				// 	time.Sleep(time.Duration(200) * time.Millisecond)
-				// }
-			}
-		}
-	}()
-
-	genRookMagics()
-	genBishopMagics()
-
-	quit <- true
-	// fmt.Println("\nDone finding rook and bishop magics.")
 }
