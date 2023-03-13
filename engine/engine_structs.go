@@ -153,9 +153,9 @@ func (engine *EngineClass) printSearchStats() {
 	print("")
 	print("Check Extensions:", engine.counters.check_extensions)
 	print("SMP Prunes:", engine.counters.smp_pruned)
-	print("Futility Prunes:", engine.counters.futility_pruned)
-	print("Razor Prunes:", engine.counters.razor_pruned)
 	print("NMP Prunes:", engine.counters.nmp_pruned)
+	print("Razor Prunes:", engine.counters.razor_pruned)
+	print("Futility Prunes:", engine.counters.futility_pruned)
 	print("IID Moves Found:", engine.counters.iid_move_found)
 }
 

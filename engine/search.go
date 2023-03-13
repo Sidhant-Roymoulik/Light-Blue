@@ -8,9 +8,6 @@ import (
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
-// Upgrades over Version 4.1:
-// 		Refactored
-
 type light_blue struct {
 	EngineClass
 }
@@ -55,66 +52,63 @@ func new_light_blue() light_blue {
 	}
 }
 
-func (engine *light_blue) run(position *chess.Position) (
+func (e *light_blue) run(position *chess.Position) (
 	best_eval int, best_move *chess.Move,
 ) {
-	engine.resetCounters()
-	engine.resetKillerMoves()
+	e.resetCounters()
+	e.resetKillerMoves()
 
-	engine.Add_Zobrist_History(Zobrist.GenHash(position))
+	e.Add_Zobrist_History(Zobrist.GenHash(position))
 
 	pvLine := PVLine{}
 
-	if engine.upgrades.iterative_deepening {
-		best_eval, best_move = engine.iterative_deepening(position, &pvLine)
+	if e.upgrades.iterative_deepening {
+		best_eval, best_move = e.iterative_deepening(position, &pvLine)
 	} else {
-		best_eval = engine.aspiration_window(
-			position, int(engine.timer.MaxDepth), &pvLine,
+		best_eval = e.aspiration_window(
+			position, int(e.timer.MaxDepth), &pvLine,
 		)
 		best_move = pvLine.getPVMove()
 	}
 
-	engine.prev_guess = best_eval
-	engine.Add_Zobrist_History(Zobrist.GenHash(position.Update(best_move)))
-
-	// print(engine.zobristHistory)
-	// print(engine.killer_moves)
+	e.prev_guess = best_eval
+	e.Add_Zobrist_History(Zobrist.GenHash(position.Update(best_move)))
 
 	return
 }
 
-func (engine *light_blue) iterative_deepening(
+func (e *light_blue) iterative_deepening(
 	position *chess.Position, pvLine *PVLine,
 ) (best_eval int, best_move *chess.Move) {
-	engine.start = time.Now()
-	engine.age ^= 1
-	engine.timer.Start()
+	e.start = time.Now()
+	e.age ^= 1
+	e.timer.Start()
 
 	for depth := 1; depth <= MAX_DEPTH &&
-		depth <= int(engine.timer.MaxDepth) &&
-		engine.timer.MaxNodeCount > 0; depth++ {
+		depth <= int(e.timer.MaxDepth) &&
+		e.timer.MaxNodeCount > 0; depth++ {
 
 		pvLine.clear()
 
-		new_eval := engine.aspiration_window(position, depth, pvLine)
+		new_eval := e.aspiration_window(position, depth, pvLine)
 
-		if engine.timer.IsStopped() {
+		if e.timer.IsStopped() {
 			break
 		}
 
 		best_eval = new_eval
-		engine.prev_guess = best_eval
-		engine.max_ply = depth
+		e.prev_guess = best_eval
+		e.max_ply = depth
 
 		best_move = pvLine.getPVMove()
-		total_time := time.Since(engine.start).Milliseconds() + 1
+		total_time := time.Since(e.start).Milliseconds() + 1
 
 		fmt.Printf(
 			"info depth %d score %s nodes %d nps %d time %d pv %s\n",
-			engine.max_ply,
+			e.max_ply,
 			getMateOrCPScore(best_eval),
-			engine.getTotalNodesSearched(),
-			int64(engine.getTotalNodesSearched()*1000)/total_time,
+			e.getTotalNodesSearched(),
+			int64(e.getTotalNodesSearched()*1000)/total_time,
 			total_time,
 			pvLine,
 		)
@@ -127,21 +121,21 @@ func (engine *light_blue) iterative_deepening(
 	return best_eval, best_move
 }
 
-func (engine *light_blue) aspiration_window(
+func (e *light_blue) aspiration_window(
 	position *chess.Position, max_depth int, pvLine *PVLine,
 ) (eval int) {
 
 	if max_depth == 1 {
-		eval = engine.pv_search(
+		eval = e.pv_search(
 			position, 0, max_depth, -math.MaxInt, math.MaxInt, pvLine, true,
 		)
 		return eval
 	}
 
-	var alpha int = engine.prev_guess - WINDOW_VALUE_TIGHT
-	var beta int = engine.prev_guess + WINDOW_VALUE_TIGHT
+	alpha := e.prev_guess - WINDOW_VALUE_TIGHT
+	beta := e.prev_guess + WINDOW_VALUE_TIGHT
 
-	eval = engine.pv_search(
+	eval = e.pv_search(
 		position, 0, max_depth, alpha, beta, pvLine, true,
 	)
 
@@ -149,16 +143,16 @@ func (engine *light_blue) aspiration_window(
 		if DEBUG {
 			print("Aspiration tight fail low")
 		}
-		alpha = engine.prev_guess - WINDOW_VALUE
-		eval = engine.pv_search(
+		alpha = e.prev_guess - WINDOW_VALUE
+		eval = e.pv_search(
 			position, 0, max_depth, alpha, beta, pvLine, true,
 		)
 	} else if eval >= beta {
 		if DEBUG {
 			print("Aspiration tight fail high")
 		}
-		beta = engine.prev_guess + WINDOW_VALUE
-		eval = engine.pv_search(
+		beta = e.prev_guess + WINDOW_VALUE
+		eval = e.pv_search(
 			position, 0, max_depth, alpha, beta, pvLine, true,
 		)
 	}
@@ -167,7 +161,7 @@ func (engine *light_blue) aspiration_window(
 		if DEBUG {
 			print("Aspiration loose fail")
 		}
-		eval = engine.pv_search(
+		eval = e.pv_search(
 			position, 0, max_depth, -math.MaxInt, math.MaxInt, pvLine, true,
 		)
 	}
@@ -175,7 +169,7 @@ func (engine *light_blue) aspiration_window(
 	return eval
 }
 
-func (engine *light_blue) pv_search(
+func (e *light_blue) pv_search(
 	position *chess.Position,
 	ply int,
 	max_depth int,
@@ -184,21 +178,21 @@ func (engine *light_blue) pv_search(
 	pvLine *PVLine,
 	do_null bool,
 ) (eval int) {
-	engine.counters.nodes_searched++
+	e.counters.nodes_searched++
 
 	if ply >= MAX_DEPTH {
 		return eval_pos(position, ply)
 	}
 
 	// Check if search is over
-	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
-		engine.timer.ForceStop()
+	if e.getTotalNodesSearched() >= e.timer.MaxNodeCount {
+		e.timer.ForceStop()
 	}
-	if (engine.getTotalNodesSearched() & TIMER_CHECK) == 0 {
-		engine.timer.CheckIfTimeIsUp()
+	if (e.getTotalNodesSearched() & TIMER_CHECK) == 0 {
+		e.timer.CheckIfTimeIsUp()
 	}
 
-	if engine.timer.IsStopped() {
+	if e.timer.IsStopped() {
 		return 0
 	}
 
@@ -215,7 +209,7 @@ func (engine *light_blue) pv_search(
 
 	// Check Extension
 	if inCheck {
-		engine.counters.check_extensions++
+		e.counters.check_extensions++
 		max_depth++
 	}
 
@@ -223,8 +217,8 @@ func (engine *light_blue) pv_search(
 
 	// Start Q-Search
 	if depth <= 0 {
-		engine.counters.nodes_searched--
-		return engine.q_search(position, 0, max_depth, alpha, beta)
+		e.counters.nodes_searched--
+		return e.q_search(position, 0, max_depth, alpha, beta)
 	}
 
 	// Check for draw by repetition
@@ -232,8 +226,8 @@ func (engine *light_blue) pv_search(
 	possibleMateInOne := inCheck && depth == 1
 	if !isRoot &&
 		((position.HalfMoveClock() >= 100 && !possibleMateInOne) ||
-			engine.Is_Draw_By_Repetition(hash)) {
-		entry := engine.tt.Probe(hash)
+			e.Is_Draw_By_Repetition(hash)) {
+		entry := e.tt.Probe(hash)
 		_, _, tt_move := entry.Get(
 			hash,
 			ply,
@@ -246,12 +240,12 @@ func (engine *light_blue) pv_search(
 	}
 
 	// Check for usable entry in transposition table
-	entry := engine.tt.Probe(hash)
+	entry := e.tt.Probe(hash)
 	tt_eval, should_use, tt_move := entry.Get(
 		hash, ply, depth, alpha, beta,
 	)
 	if !isRoot && should_use {
-		engine.counters.hashes_used++
+		e.counters.hashes_used++
 		return tt_eval
 	}
 
@@ -263,33 +257,15 @@ func (engine *light_blue) pv_search(
 		if abs(beta) < MATE_CUTOFF {
 			eval_margin := StaticNullMovePruningBaseMargin * depth
 			if static_eval-eval_margin >= beta {
-				engine.counters.smp_pruned++
+				e.counters.smp_pruned++
 				return static_eval - eval_margin
-			}
-		}
-
-		// Futility Pruning
-		if depth <= FutilityPruningDepthLimit &&
-			alpha < MATE_CUTOFF &&
-			beta < MATE_CUTOFF {
-			canFutilityPrune = static_eval+FutilityMargins[depth] <= alpha
-		}
-
-		// Razoring
-		if depth <= 2 {
-			if static_eval+FutilityMargins[depth]*3 < beta {
-				eval := engine.q_search(position, 0, ply, alpha, beta)
-				if eval < beta {
-					engine.counters.razor_pruned++
-					return eval
-				}
 			}
 		}
 
 		// Null Move Pruning
 		if do_null && depth >= NMR_Depth_Limit {
 			R := 3 + depth/6
-			eval := -engine.pv_search(
+			eval := -e.pv_search(
 				position.NullMove(),
 				ply+1,
 				Max(max_depth-R, ply+1),
@@ -300,9 +276,27 @@ func (engine *light_blue) pv_search(
 			)
 			childPVLine.clear()
 			if eval >= beta && abs(eval) < MATE_CUTOFF {
-				engine.counters.nmp_pruned++
+				e.counters.nmp_pruned++
 				return beta
 			}
+		}
+
+		// Razoring
+		if depth <= 2 {
+			if static_eval+FutilityMargins[depth]*3 < beta {
+				eval := e.q_search(position, 0, ply, alpha, beta)
+				if eval < beta {
+					e.counters.razor_pruned++
+					return eval
+				}
+			}
+		}
+
+		// Futility Pruning
+		if depth <= FutilityPruningDepthLimit &&
+			alpha < MATE_CUTOFF &&
+			beta < MATE_CUTOFF {
+			canFutilityPrune = static_eval+FutilityMargins[depth] <= alpha
 		}
 	}
 
@@ -310,7 +304,7 @@ func (engine *light_blue) pv_search(
 	// if depth > IID_Depth_Limit &&
 	// 	(isPVNode || entry.GetFlag() == BetaFlag) &&
 	// 	tt_move == nil {
-	// 	engine.pv_search(
+	// 	e.pv_search(
 	// 		position,
 	// 		ply+1,
 	// 		max_depth-IID_Depth_Reduction,
@@ -320,7 +314,7 @@ func (engine *light_blue) pv_search(
 	// 		do_null,
 	// 	)
 	// 	if len(childPVLine.Moves) > 0 {
-	// 		engine.counters.iid_move_found++
+	// 		e.counters.iid_move_found++
 	// 		tt_move = childPVLine.getPVMove()
 	// 		childPVLine.clear()
 	// 	}
@@ -330,7 +324,7 @@ func (engine *light_blue) pv_search(
 	moves := score_moves(
 		position.ValidMoves(),
 		position.Board(),
-		engine.killer_moves[ply],
+		e.killer_moves[ply],
 		tt_move,
 	)
 
@@ -356,7 +350,7 @@ func (engine *light_blue) pv_search(
 		if canFutilityPrune &&
 			i > 0 &&
 			!is_q_move(move) {
-			engine.counters.futility_pruned++
+			e.counters.futility_pruned++
 			continue
 		}
 
@@ -364,13 +358,13 @@ func (engine *light_blue) pv_search(
 		new_position := position.Update(move)
 
 		// Add to move history
-		engine.Add_Zobrist_History(Zobrist.GenHash(new_position))
+		e.Add_Zobrist_History(Zobrist.GenHash(new_position))
 
 		new_eval := 0
 
 		if i == 0 {
 			// Principal-Variation Search
-			new_eval = -engine.pv_search(
+			new_eval = -e.pv_search(
 				new_position,
 				ply+1,
 				max_depth,
@@ -381,7 +375,7 @@ func (engine *light_blue) pv_search(
 			)
 		} else {
 			// Null-Window Search
-			new_eval = -engine.pv_search(
+			new_eval = -e.pv_search(
 				new_position,
 				ply+1,
 				max_depth,
@@ -392,7 +386,7 @@ func (engine *light_blue) pv_search(
 			)
 			if new_eval > alpha && new_eval < beta {
 				// Principal-Variation Search
-				new_eval = -engine.pv_search(
+				new_eval = -e.pv_search(
 					new_position,
 					ply+1,
 					max_depth,
@@ -405,14 +399,14 @@ func (engine *light_blue) pv_search(
 		}
 
 		// Clear move from history
-		engine.Remove_Zobrist_History()
+		e.Remove_Zobrist_History()
 
 		if new_eval > alpha {
 			best_move = move
 
 			if new_eval >= beta { // Fail-hard beta-cutoff
 				// Add killer move
-				engine.addKillerMove(move, ply)
+				e.addKillerMove(move, ply)
 
 				alpha = beta
 				tt_flag = BetaFlag
@@ -429,32 +423,31 @@ func (engine *light_blue) pv_search(
 	}
 
 	// Save position to transposition table
-	if !engine.timer.IsStopped() {
-		entry := engine.tt.Store(
-			hash, depth, engine.age,
+	if !e.timer.IsStopped() {
+		entry := e.tt.Store(
+			hash, depth, e.age,
 		)
 		entry.Set(
-			hash, alpha, best_move, ply, depth, tt_flag, engine.age,
+			hash, alpha, best_move, ply, depth, tt_flag, e.age,
 		)
 	}
 
 	return alpha
 }
 
-func (engine *light_blue) q_search(
+func (e *light_blue) q_search(
 	position *chess.Position,
 	ply int,
 	max_depth int,
 	alpha int,
 	beta int,
 ) int {
-	engine.counters.q_nodes_searched++
+	e.counters.q_nodes_searched++
 
 	eval := eval_pos(position, ply+max_depth)
-	inCheck := ply <= 2 && position.InCheck()
 
 	// Delta Pruning
-	if !inCheck && eval >= beta {
+	if eval >= beta {
 		return beta
 	}
 	if eval >= alpha {
@@ -466,41 +459,30 @@ func (engine *light_blue) q_search(
 	}
 
 	// Check if search is over
-	if engine.getTotalNodesSearched() >= engine.timer.MaxNodeCount {
-		engine.timer.ForceStop()
+	if e.getTotalNodesSearched() >= e.timer.MaxNodeCount {
+		e.timer.ForceStop()
 	}
-	if (engine.getTotalNodesSearched() & TIMER_CHECK) == 0 {
-		engine.timer.CheckIfTimeIsUp()
+	if (e.getTotalNodesSearched() & TIMER_CHECK) == 0 {
+		e.timer.CheckIfTimeIsUp()
 	}
 
-	if engine.timer.IsStopped() {
+	if e.timer.IsStopped() {
 		return 0
 	}
 
 	// Sort Moves
-	var moves []scored_move = nil
-
-	if inCheck {
-		moves = score_moves(
-			position.ValidMoves(),
-			position.Board(),
-			[2]*chess.Move{nil, nil},
-			nil,
-		)
-	} else {
-		moves = score_moves(
-			get_q_moves(position),
-			position.Board(),
-			[2]*chess.Move{nil, nil},
-			nil,
-		)
-	}
+	moves := score_moves(
+		get_q_moves(position),
+		position.Board(),
+		[2]*chess.Move{nil, nil},
+		nil,
+	)
 
 	for i := 0; i < len(moves); i++ {
 		get_move(moves, i)
 		move := moves[i].move
 
-		new_eval := -engine.q_search(
+		new_eval := -e.q_search(
 			position.Update(move), ply+1, max_depth, -beta, -alpha,
 		)
 
