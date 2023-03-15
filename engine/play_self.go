@@ -6,7 +6,7 @@ import (
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
-func play_self(white Engine, black Engine, game *chess.Game) {
+func play_self(white light_blue, black light_blue, game *chess.Game) {
 	white.reset()
 	black.reset()
 
@@ -38,15 +38,13 @@ func play_self(white Engine, black Engine, game *chess.Game) {
 			panic(err)
 		}
 
-		var engine Engine = nil
+		var engine light_blue = white
 		if game.Position().Turn() == chess.White {
 			engine = black
-		} else {
-			engine = white
 		}
 
 		print("")
-		print("Depth:", engine.getDepth())
+		print("Depth:", engine.max_ply)
 		print("Best Move:", move.String())
 		if eval > MATE_CUTOFF {
 			print("Eval: Mate in", (CHECKMATE_VALUE-eval+1)/2)

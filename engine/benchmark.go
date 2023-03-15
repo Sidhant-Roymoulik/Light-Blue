@@ -1,50 +1,78 @@
 package engine
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
+	"github.com/bndr/gotabulate"
 )
 
 // Adapted from https://github.com/0hq/antikythera/blob/main/benchmark.go#L24
 
-func benchmark(ply int, e Engine, pos *chess.Position) float64 {
+func benchmark(
+	ply int, e light_blue, pos *chess.Position, rows [][]interface{},
+) [][]interface{} {
 	e.setBenchmarkMode(ply)
 	e.resetZobrist()
 
 	print("BEGIN BENCHMARKING -", e.getName())
-	// print("Starting at time", time.Now())
+	print("Benchmark Depth:", e.max_ply)
 
 	start := time.Now()
 	eval, move := e.run(pos)
-	elapsed := time.Since(start)
 
-	print("Depth:", e.getDepth())
-
-	// print("Complete at time", time.Now())
-	print("Best Move:", move.String())
-	if eval > MATE_CUTOFF {
-		print("Eval: Mate in", (CHECKMATE_VALUE-eval+1)/2)
-	} else if eval < -MATE_CUTOFF {
-		print("Eval: Mate in", (CHECKMATE_VALUE+eval+1)/2)
-	} else {
-		print("Eval:", float32(eval*getMultiplier(pos.Turn() == chess.White))/100.0)
+	row := []interface{}{
+		e.max_ply,
+		move.String(),
+		getMateOrCPScore(eval),
+		(time.Since(start)).Round(time.Millisecond),
+		e.counters.nodes_searched,
+		e.counters.q_nodes_searched,
+		e.counters.hashes_used,
+		e.counters.check_extensions,
+		e.counters.smp_pruned,
+		e.counters.nmp_pruned,
+		e.counters.razor_pruned,
+		e.counters.iid_move_found,
+		e.counters.lmp_pruned,
+		e.counters.futility_pruned,
 	}
-	print("Time Taken:", (time.Since(start)).Round(time.Millisecond))
-	e.printSearchStats()
+	rows = append(rows, row)
+
 	print("END BENCHMARKING -")
 	print()
 
-	return elapsed.Seconds()
+	return rows
 }
 
-func benchmark_range(plymin int, plymax int, e Engine, pos *chess.Position) {
+func benchmark_range(plymin int, plymax int, e light_blue, pos *chess.Position) {
+	rows := [][]interface{}{}
 	for i := plymin; i <= plymax; i++ {
-		benchmark(i, e, pos)
+		rows = benchmark(i, e, pos, rows)
+
+		t := gotabulate.Create(rows)
+		t.SetHeaders([]string{
+			"Depth",
+			"Move",
+			"Eval",
+			"Time",
+			"Nodes",
+			"Q-Nodes",
+			"Hashes",
+			"Checks",
+			"SMP",
+			"NMP",
+			"Razor",
+			"IID",
+			"LMP",
+			"Futility",
+		})
+		fmt.Println(t.Render("grid"))
 	}
 }
 
-func benchmark_engines(engines []Engine, pos *chess.Position) {
+func benchmark_engines(engines []light_blue, pos *chess.Position) {
 	for _, e := range engines {
 		e.reset()
 		benchmark_range(1, 8, e, pos)

@@ -100,11 +100,11 @@ func (entry *SearchEntry) Get(hash uint64, ply int, depth int, alpha int, beta i
 			// to store the score as a checkmate-in-3. Then, if we read the checkmate-in-3 from
 			// the table in a node that's 4 plies from the root, we need to return the score as
 			// checkmate-in-7.
-			if score > 30000 {
+			if score > MATE_CUTOFF {
 				score -= ply
 			}
 
-			if score < -30000 {
+			if score < -MATE_CUTOFF {
 				score += ply
 			}
 
@@ -131,18 +131,6 @@ func (entry *SearchEntry) Get(hash uint64, ply int, depth int, alpha int, beta i
 				shouldUse = true
 			}
 		}
-
-		// if ply == 1 {
-		// 	out("Hash hit:", entry.Score, entry.Depth, entry.FlagAndAge, shouldUse)
-		// }
-
-		// if ply == 1 && !shouldUse {
-		// 	out("Right depth?", entry.Depth >= depth)
-		// 	out("What flag? (exact, alpha, beta)", entry.GetFlag() == ExactFlag, entry.GetFlag() == AlphaFlag, entry.GetFlag() == BetaFlag)
-		// 	out("Right less than alpha?", entry.Score <= alpha, entry.Score, alpha)
-		// 	out("Right greater than beta?", entry.Score >= beta, entry.Score, beta)
-		// 	out()
-		// }
 	}
 
 	// Return the score
@@ -165,11 +153,11 @@ func (entry *SearchEntry) Set(hash uint64, score int, best *chess.Move, ply int,
 	// to store the score as a checkmate-in-3. Then, if we read the checkmate-in-3 from
 	// the table in a node that's 4 plies from the root, we need to return the score as
 	// checkmate-in-7.
-	if score > 30000 {
+	if score > MATE_CUTOFF {
 		score += ply
 	}
 
-	if score < -30000 {
+	if score < -MATE_CUTOFF {
 		score -= ply
 	}
 

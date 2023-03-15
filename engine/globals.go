@@ -59,3 +59,5 @@ var FutilityMargins = [9]int{
 	460, // depth 7
 	520, // depth 8
 }
+
+var LateMovePruningMargins = [6]int{0, 8, 12, 16, 20, 24}
