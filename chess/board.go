@@ -22,11 +22,11 @@ type Board struct {
 	BBBlackBishop Bitboard
 	BBBlackKnight Bitboard
 	BBBlackPawn   Bitboard
-	whiteSqs      Bitboard
-	blackSqs      Bitboard
-	emptySqs      Bitboard
-	whiteKingSq   Square
-	blackKingSq   Square
+	WhiteSqs      Bitboard
+	BlackSqs      Bitboard
+	EmptySqs      Bitboard
+	WhiteKingSq   Square
+	BlackKingSq   Square
 }
 
 // NewBoard returns a board from a square to piece mapping.
@@ -263,38 +263,38 @@ func (b *Board) update(m *Move) {
 }
 
 func (b *Board) calcConvienceBBs(m *Move) {
-	whiteSqs := b.BBWhiteKing | b.BBWhiteQueen | b.BBWhiteRook | b.BBWhiteBishop | b.BBWhiteKnight | b.BBWhitePawn
-	blackSqs := b.BBBlackKing | b.BBBlackQueen | b.BBBlackRook | b.BBBlackBishop | b.BBBlackKnight | b.BBBlackPawn
-	emptySqs := ^(whiteSqs | blackSqs)
-	b.whiteSqs = whiteSqs
-	b.blackSqs = blackSqs
-	b.emptySqs = emptySqs
+	WhiteSqs := b.BBWhiteKing | b.BBWhiteQueen | b.BBWhiteRook | b.BBWhiteBishop | b.BBWhiteKnight | b.BBWhitePawn
+	BlackSqs := b.BBBlackKing | b.BBBlackQueen | b.BBBlackRook | b.BBBlackBishop | b.BBBlackKnight | b.BBBlackPawn
+	EmptySqs := ^(WhiteSqs | BlackSqs)
+	b.WhiteSqs = WhiteSqs
+	b.BlackSqs = BlackSqs
+	b.EmptySqs = EmptySqs
 	if m == nil {
-		b.whiteKingSq = NoSquare
-		b.blackKingSq = NoSquare
+		b.WhiteKingSq = NoSquare
+		b.BlackKingSq = NoSquare
 
 		for sq := 0; sq < numOfSquaresInBoard; sq++ {
 			sqr := Square(sq)
 			if b.BBWhiteKing.Occupied(sqr) {
-				b.whiteKingSq = sqr
+				b.WhiteKingSq = sqr
 			} else if b.BBBlackKing.Occupied(sqr) {
-				b.blackKingSq = sqr
+				b.BlackKingSq = sqr
 			}
 		}
-	} else if m.s1 == b.whiteKingSq {
-		b.whiteKingSq = m.s2
-	} else if m.s1 == b.blackKingSq {
-		b.blackKingSq = m.s2
+	} else if m.s1 == b.WhiteKingSq {
+		b.WhiteKingSq = m.s2
+	} else if m.s1 == b.BlackKingSq {
+		b.BlackKingSq = m.s2
 	}
 }
 
 func (b *Board) copy() *Board {
 	return &Board{
-		whiteSqs:      b.whiteSqs,
-		blackSqs:      b.blackSqs,
-		emptySqs:      b.emptySqs,
-		whiteKingSq:   b.whiteKingSq,
-		blackKingSq:   b.blackKingSq,
+		WhiteSqs:      b.WhiteSqs,
+		BlackSqs:      b.BlackSqs,
+		EmptySqs:      b.EmptySqs,
+		WhiteKingSq:   b.WhiteKingSq,
+		BlackKingSq:   b.BlackKingSq,
 		BBWhiteKing:   b.BBWhiteKing,
 		BBWhiteQueen:  b.BBWhiteQueen,
 		BBWhiteRook:   b.BBWhiteRook,
@@ -311,7 +311,7 @@ func (b *Board) copy() *Board {
 }
 
 func (b *Board) isOccupied(sq Square) bool {
-	return !b.emptySqs.Occupied(sq)
+	return !b.EmptySqs.Occupied(sq)
 }
 
 func (b *Board) hasSufficientMaterial() bool {

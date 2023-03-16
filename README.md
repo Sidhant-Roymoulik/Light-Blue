@@ -35,7 +35,7 @@ A UCI-Compatible Chess Engine Built in Golang
  - [x] Static Move Pruning
  - [x] Razoring
  - [x] Extended Futility Pruning
- - [x] Internal Iterative Deepening
+ - [ ] Internal Iterative Deepening
  - [x] Late Move Pruning
  - [ ] Late Move Reduction
  - [ ] Singular Extensions
@@ -43,7 +43,6 @@ A UCI-Compatible Chess Engine Built in Golang
 ### C-Tier Upgrades
 
  - [x] Killer Moves Heuristic
- - [ ] Anything Else I Can Think Of
 
 ---
 

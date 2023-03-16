@@ -15,16 +15,7 @@ func new_light_blue() light_blue {
 			name:   "Light Blue 1",
 			author: "Sidhant Roymoulik",
 			upgrades: EngineUpgrades{
-				move_ordering:                true,
-				alphabeta:                    true,
-				iterative_deepening:          true,
-				q_search:                     true,
-				delta_pruning:                true,
-				transposition_table:          true,
-				killer_moves:                 true,
-				pvs:                          true,
-				aspiration_window:            true,
-				internal_iterative_deepening: true,
+				iterative_deepening: true,
 			},
 		},
 		0,
@@ -305,7 +296,7 @@ func (e *light_blue) pv_search(
 	// 		-beta,
 	// 		-alpha,
 	// 		&childPVLine,
-	// 		do_null,
+	// 		true,
 	// 	)
 	// 	if len(childPVLine.Moves) > 0 {
 	// 		e.counters.iid_move_found++

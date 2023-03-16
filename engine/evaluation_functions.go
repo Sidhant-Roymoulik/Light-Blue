@@ -1,10 +1,16 @@
 package engine
 
 import (
-	"encoding/binary"
-
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
+
+var score_mg []int = []int{0, 0}
+var score_eg []int = []int{0, 0}
+
+var pieces [2][7]chess.Bitboard = [2][7]chess.Bitboard{
+	{0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0},
+}
 
 // -----------------------------------------------------------------------------
 // 		Bonuses + Penalties
@@ -35,19 +41,19 @@ const (
 	TempoBonusMG int = 14
 
 	DrawishScaleFactor int = 16
-
-	// -------------------------------------------------------------------------
-	// 		Tapered Evaluation Values
-	// -------------------------------------------------------------------------
-
-	PawnPhase   int = 0
-	KnightPhase int = 1
-	BishopPhase int = 1
-	RookPhase   int = 2
-	QueenPhase  int = 4
-	TotalPhase  int = PawnPhase*16 +
-		KnightPhase*4 + BishopPhase*4 + RookPhase*4 + QueenPhase*2
 )
+
+// -----------------------------------------------------------------------------
+// 		Tapered Evaluation Values
+// -----------------------------------------------------------------------------
+
+var phases [7]int = [7]int{0, 0, 4, 2, 1, 1, 0}
+
+var TotalPhase int = phases[chess.Pawn]*16 +
+	phases[chess.Knight]*4 +
+	phases[chess.Bishop]*4 +
+	phases[chess.Rook]*4 +
+	phases[chess.Queen]*2
 
 // -----------------------------------------------------------------------------
 // 		Bitboards
@@ -72,56 +78,22 @@ var KingZonesMasks [64]KingZone
 var KingAttackPoints [2]int
 var KingAttackers [2]int
 
-var OuterRingAttackPoints = map[chess.PieceType]int{
-	chess.Queen:  1,
-	chess.Rook:   1,
-	chess.Bishop: 0,
-	chess.Knight: 1,
-}
+var OuterRingAttackPoints = []int{0, 0, 1, 1, 0, 1}
 
-var InnerRingAttackPoints = map[chess.PieceType]int{
-	chess.Queen:  2,
-	chess.Rook:   3,
-	chess.Bishop: 4,
-	chess.Knight: 3,
-}
+var InnerRingAttackPoints = []int{0, 0, 2, 3, 4, 3}
 
 // -----------------------------------------------------------------------------
 // 		Piece Values
 // -----------------------------------------------------------------------------
 
 // piece value map
-var PVM_MG = map[chess.PieceType]int{
-	chess.Pawn:   96,
-	chess.Knight: 192,
-	chess.Bishop: 214,
-	chess.Rook:   311,
-	chess.Queen:  787,
-}
+var PVM_MG = [7]int{0, 20000, 787, 311, 214, 192, 96}
 
-var PVM_EG = map[chess.PieceType]int{
-	chess.Pawn:   139,
-	chess.Knight: 277,
-	chess.Bishop: 294,
-	chess.Rook:   484,
-	chess.Queen:  807,
-}
+var PVM_EG = [7]int{0, 20000, 807, 484, 294, 277, 139}
 
-var Mobility_MG = map[chess.PieceType]int{
-	chess.Queen:  0,
-	chess.Rook:   3,
-	chess.Bishop: 3,
-	chess.Knight: 5,
-	chess.Pawn:   0,
-}
+var Mobility_MG = [7]int{0, 0, 0, 3, 3, 5, 0}
 
-var Mobility_EG = map[chess.PieceType]int{
-	chess.Queen:  6,
-	chess.Rook:   2,
-	chess.Bishop: 3,
-	chess.Knight: 2,
-	chess.Pawn:   0,
-}
+var Mobility_EG = [7]int{0, 0, 6, 2, 3, 2, 0}
 
 // -----------------------------------------------------------------------------
 // 		Piece Square Table Stuff
@@ -173,58 +145,18 @@ var FlipRank = [2][8]chess.Rank{
 	},
 }
 
-var PST_MG = map[chess.PieceType][]int{
-	chess.Pawn: {
+var PST_MG = [7][64]int{
+	{
 		0, 0, 0, 0, 0, 0, 0, 0,
-		30, 41, 55, 56, 44, 25, 15, 15,
-		-8, 1, 24, 47, 48, 31, 36, 18,
-		-26, -15, -16, -5, 7, 6, 13, -8,
-		-38, -23, -23, -16, -11, -10, -2, -16,
-		-44, -26, -33, -34, -18, -11, 3, -19,
-		-43, -30, -34, -43, -26, -10, 0, -28,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 	},
-	chess.Knight: {
-		-38, 0, 5, 5, 0, -5, -3, -3,
-		-6, 13, 17, 10, 27, 25, 1, 10,
-		-1, 17, 36, 45, 57, 33, 37, 0,
-		0, -1, 3, 24, 7, 31, 3, 19,
-		-22, 6, -1, -7, 1, 2, 17, -10,
-		-29, -16, -12, 2, 0, -7, 3, -15,
-		-35, -30, -16, -17, -14, -13, -33, -25,
-		-32, -30, -42, -40, -27, -28, -25, -34,
-	},
-	chess.Bishop: {
-		-8, -6, 0, -8, -7, -5, -4, -3,
-		-10, -7, -2, 4, 2, 10, -17, -8,
-		-6, 21, 6, 29, 26, 20, 33, 15,
-		-7, -10, 9, 26, 5, 26, -4, -5,
-		-5, -2, -3, 2, 3, -3, 0, 0,
-		-12, 2, -3, -5, -6, -9, -2, -4,
-		-5, -10, 2, -18, -15, -7, -4, -17,
-		-22, -2, -21, -32, -28, -24, -16, -14,
-	},
-	chess.Rook: {
-		15, 18, 15, 22, 10, 6, 3, 11,
-		11, -1, 15, 28, 19, 14, 6, 16,
-		-2, 15, 0, 25, 34, 31, 21, 5,
-		-5, -7, -15, 18, 1, -7, -1, 5,
-		-32, -28, -30, -15, -29, -26, -4, -33,
-		-48, -21, -29, -25, -33, -28, -20, -17,
-		-47, -37, -28, -26, -31, -37, -24, -41,
-		-42, -35, -29, -25, -25, -39, -34, -35,
-	},
-	chess.Queen: {
-		-10, -1, 5, 6, 1, 4, 6, -4,
-		0, -14, 2, 1, 10, 18, -4, 4,
-		-9, 1, 3, 18, 31, 29, 31, 27,
-		-9, -1, 3, -1, 4, 10, 6, 5,
-		-14, -9, -11, -10, -12, -4, 0, 3,
-		-10, -11, -7, -14, -4, -5, 3, -2,
-		-28, -15, -6, -4, -3, 3, -9, -2,
-		-9, -21, -19, -12, -7, -32, -4, -30,
-	},
-	chess.King: {
+	{
 		0, 1, 0, 0, 1, 0, 0, 0,
 		0, 2, 2, 2, 1, 2, 4, 0,
 		0, 8, 7, 4, 2, 6, 6, 0,
@@ -234,50 +166,80 @@ var PST_MG = map[chess.PieceType][]int{
 		3, 2, -13, -25, -26, -22, 10, 2,
 		3, 42, 13, -53, -1, -33, 27, 29,
 	},
+	{
+		-10, -1, 5, 6, 1, 4, 6, -4,
+		0, -14, 2, 1, 10, 18, -4, 4,
+		-9, 1, 3, 18, 31, 29, 31, 27,
+		-9, -1, 3, -1, 4, 10, 6, 5,
+		-14, -9, -11, -10, -12, -4, 0, 3,
+		-10, -11, -7, -14, -4, -5, 3, -2,
+		-28, -15, -6, -4, -3, 3, -9, -2,
+		-9, -21, -19, -12, -7, -32, -4, -30,
+	},
+	{
+		15, 18, 15, 22, 10, 6, 3, 11,
+		11, -1, 15, 28, 19, 14, 6, 16,
+		-2, 15, 0, 25, 34, 31, 21, 5,
+		-5, -7, -15, 18, 1, -7, -1, 5,
+		-32, -28, -30, -15, -29, -26, -4, -33,
+		-48, -21, -29, -25, -33, -28, -20, -17,
+		-47, -37, -28, -26, -31, -37, -24, -41,
+		-42, -35, -29, -25, -25, -39, -34, -35,
+	},
+	{
+		-8, -6, 0, -8, -7, -5, -4, -3,
+		-10, -7, -2, 4, 2, 10, -17, -8,
+		-6, 21, 6, 29, 26, 20, 33, 15,
+		-7, -10, 9, 26, 5, 26, -4, -5,
+		-5, -2, -3, 2, 3, -3, 0, 0,
+		-12, 2, -3, -5, -6, -9, -2, -4,
+		-5, -10, 2, -18, -15, -7, -4, -17,
+		-22, -2, -21, -32, -28, -24, -16, -14,
+	},
+	{
+		-38, 0, 5, 5, 0, -5, -3, -3,
+		-6, 13, 17, 10, 27, 25, 1, 10,
+		-1, 17, 36, 45, 57, 33, 37, 0,
+		0, -1, 3, 24, 7, 31, 3, 19,
+		-22, 6, -1, -7, 1, 2, 17, -10,
+		-29, -16, -12, 2, 0, -7, 3, -15,
+		-35, -30, -16, -17, -14, -13, -33, -25,
+		-32, -30, -42, -40, -27, -28, -25, -34,
+	},
+	{
+		0, 0, 0, 0, 0, 0, 0, 0,
+		30, 41, 55, 56, 44, 25, 15, 15,
+		-8, 1, 24, 47, 48, 31, 36, 18,
+		-26, -15, -16, -5, 7, 6, 13, -8,
+		-38, -23, -23, -16, -11, -10, -2, -16,
+		-44, -26, -33, -34, -18, -11, 3, -19,
+		-43, -30, -34, -43, -26, -10, 0, -28,
+		0, 0, 0, 0, 0, 0, 0, 0,
+	},
 }
 
-var PST_EG = map[chess.PieceType][]int{
-	chess.Pawn: {
+var PST_EG = [7][64]int{
+	{
 		0, 0, 0, 0, 0, 0, 0, 0,
-		83, 78, 59, 64, 68, 43, 51, 64,
-		44, 35, 23, 10, 20, 19, 50, 21,
-		0, -2, -13, -26, -24, -30, -9, -9,
-		-16, -13, -33, -40, -34, -32, -22, -30,
-		-26, -14, -34, -24, -28, -32, -25, -35,
-		-17, -9, -19, -9, -13, -21, -20, -33,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0,
 		0, 0, 0, 0, 0, 0, 0, 0,
 	},
-	chess.Knight: {
-		-22, -1, 6, 2, 0, -4, -6, -3,
-		-9, 2, 7, 12, 16, 2, -3, 0,
-		4, 4, 27, 24, 26, 10, 17, 0,
-		12, 27, 31, 36, 37, 18, 27, -5,
-		-14, 2, 31, 34, 36, 30, 3, -12,
-		-32, -1, 12, 22, 17, 0, -22, -17,
-		-32, -20, -20, -12, -11, -9, -18, -13,
-		-19, -67, -28, -18, -37, -34, -45, -18,
+	{
+		-1, 4, -2, 2, 8, 2, 2, 0,
+		-1, 14, 10, 8, 12, 14, 21, -3,
+		3, 33, 25, 18, 22, 29, 26, 3,
+		5, 19, 21, 25, 39, 25, 26, -1,
+		-8, 10, 19, 18, 18, 11, 3, -20,
+		-8, -11, 1, 4, 8, 0, -10, -24,
+		-12, -19, -4, -5, -1, -7, -19, -25,
+		-20, -41, -24, -28, -58, -20, -37, -70,
 	},
-	chess.Bishop: {
-		-8, -5, 7, 6, 0, -2, -9, 0,
-		-11, 1, 6, 9, -2, 1, 0, -14,
-		6, 12, 7, 0, 11, 17, 17, 17,
-		-11, 17, 7, 14, 28, 8, 9, 5,
-		-6, 12, 25, 13, 23, 19, -2, -26,
-		-17, 8, 9, 18, 17, 1, -6, -9,
-		-17, -24, -9, 2, 5, -17, -10, -18,
-		-15, -25, -37, -9, -19, -12, -8, -14,
-	},
-	chess.Rook: {
-		7, 15, 22, 15, 21, 9, 10, 12,
-		5, 20, 19, 25, 30, 10, 15, 15,
-		15, 14, 19, 15, 13, 14, 11, 2,
-		0, 7, 22, 10, 5, 5, 3, 1,
-		-5, -5, 8, -1, -1, 0, -9, -13,
-		-13, -16, -11, -17, -9, -22, -7, -26,
-		-21, -20, -13, -16, -28, -26, -33, -13,
-		-17, -10, -3, -1, -14, -9, -13, -31,
-	},
-	chess.Queen: {
+	{
 		0, 6, 4, 3, 3, 4, 5, 1,
 		-13, 10, 11, 11, 5, 8, 5, -3,
 		-6, 7, 9, 11, 15, 22, 14, 4,
@@ -287,15 +249,45 @@ var PST_EG = map[chess.PieceType][]int{
 		-10, -12, -22, -20, -31, -35, -12, -6,
 		-10, -6, -32, -25, -29, -23, -11, -8,
 	},
-	chess.King: {
-		-1, 4, -2, 2, 8, 2, 2, 0,
-		-1, 14, 10, 8, 12, 14, 21, -3,
-		3, 33, 25, 18, 22, 29, 26, 3,
-		5, 19, 21, 25, 39, 25, 26, -1,
-		-8, 10, 19, 18, 18, 11, 3, -20,
-		-8, -11, 1, 4, 8, 0, -10, -24,
-		-12, -19, -4, -5, -1, -7, -19, -25,
-		-20, -41, -24, -28, -58, -20, -37, -70,
+	{
+		7, 15, 22, 15, 21, 9, 10, 12,
+		5, 20, 19, 25, 30, 10, 15, 15,
+		15, 14, 19, 15, 13, 14, 11, 2,
+		0, 7, 22, 10, 5, 5, 3, 1,
+		-5, -5, 8, -1, -1, 0, -9, -13,
+		-13, -16, -11, -17, -9, -22, -7, -26,
+		-21, -20, -13, -16, -28, -26, -33, -13,
+		-17, -10, -3, -1, -14, -9, -13, -31,
+	},
+	{
+		-8, -5, 7, 6, 0, -2, -9, 0,
+		-11, 1, 6, 9, -2, 1, 0, -14,
+		6, 12, 7, 0, 11, 17, 17, 17,
+		-11, 17, 7, 14, 28, 8, 9, 5,
+		-6, 12, 25, 13, 23, 19, -2, -26,
+		-17, 8, 9, 18, 17, 1, -6, -9,
+		-17, -24, -9, 2, 5, -17, -10, -18,
+		-15, -25, -37, -9, -19, -12, -8, -14,
+	},
+	{
+		-22, -1, 6, 2, 0, -4, -6, -3,
+		-9, 2, 7, 12, 16, 2, -3, 0,
+		4, 4, 27, 24, 26, 10, 17, 0,
+		12, 27, 31, 36, 37, 18, 27, -5,
+		-14, 2, 31, 34, 36, 30, 3, -12,
+		-32, -1, 12, 22, 17, 0, -22, -17,
+		-32, -20, -20, -12, -11, -9, -18, -13,
+		-19, -67, -28, -18, -37, -34, -45, -18,
+	},
+	{
+		0, 0, 0, 0, 0, 0, 0, 0,
+		83, 78, 59, 64, 68, 43, 51, 64,
+		44, 35, 23, 10, 20, 19, 50, 21,
+		0, -2, -13, -26, -24, -30, -9, -9,
+		-16, -13, -33, -40, -34, -32, -22, -30,
+		-26, -14, -34, -24, -28, -32, -25, -35,
+		-17, -9, -19, -9, -13, -21, -20, -33,
+		0, 0, 0, 0, 0, 0, 0, 0,
 	},
 }
 
@@ -327,68 +319,48 @@ var PassedPawn_EG = [64]int{
 
 // Best Evaluation
 func eval_pos(position *chess.Position) int {
-	data, err := position.Board().MarshalBinary()
-	if err != nil {
-		print(err)
-		return 0
-	}
+	board := position.Board()
 
-	var pieces = [2]map[chess.PieceType]chess.Bitboard{
+	pieces = [2][7]chess.Bitboard{
 		{
-			chess.King:   chess.Bitboard(binary.BigEndian.Uint64(data[:8])),
-			chess.Queen:  chess.Bitboard(binary.BigEndian.Uint64(data[8:16])),
-			chess.Rook:   chess.Bitboard(binary.BigEndian.Uint64(data[16:24])),
-			chess.Bishop: chess.Bitboard(binary.BigEndian.Uint64(data[24:32])),
-			chess.Knight: chess.Bitboard(binary.BigEndian.Uint64(data[32:40])),
-			chess.Pawn:   chess.Bitboard(binary.BigEndian.Uint64(data[40:48])),
+			0,
+			board.BBWhiteKing,
+			board.BBWhiteQueen,
+			board.BBWhiteRook,
+			board.BBWhiteBishop,
+			board.BBWhiteKnight,
+			board.BBWhitePawn,
 		},
 		{
-			chess.King:   chess.Bitboard(binary.BigEndian.Uint64(data[48:56])),
-			chess.Queen:  chess.Bitboard(binary.BigEndian.Uint64(data[56:64])),
-			chess.Rook:   chess.Bitboard(binary.BigEndian.Uint64(data[64:72])),
-			chess.Bishop: chess.Bitboard(binary.BigEndian.Uint64(data[72:80])),
-			chess.Knight: chess.Bitboard(binary.BigEndian.Uint64(data[80:88])),
-			chess.Pawn:   chess.Bitboard(binary.BigEndian.Uint64(data[88:96])),
+			0,
+			board.BBBlackKing,
+			board.BBBlackQueen,
+			board.BBBlackRook,
+			board.BBBlackBishop,
+			board.BBBlackKnight,
+			board.BBBlackPawn,
 		},
 	}
 
 	// Draw by Insufficient Material
-	if is_draw(pieces) {
+	if is_draw(&pieces) {
 		return 0
 	}
 
-	var sides = [2]chess.Bitboard{
-		chess.White: 0,
-		chess.Black: 0,
-	}
-
-	for i := 0; i < 12; i++ {
-		if i < 6 {
-			sides[chess.White] |= chess.Bitboard(
-				binary.BigEndian.Uint64(data[i*8 : i*8+8]),
-			)
-		} else {
-			sides[chess.Black] |= chess.Bitboard(
-				binary.BigEndian.Uint64(data[i*8 : i*8+8]),
-			)
-		}
-	}
-
-	score_mg := [2]int{0, 0}
-	score_eg := [2]int{0, 0}
+	score_mg = []int{0, 0}
+	score_eg = []int{0, 0}
 
 	turn := position.Turn()
 
-	squares := position.Board().SquareMap()
+	sides := [2]chess.Bitboard{board.WhiteSqs, board.BlackSqs}
+
+	squares := board.SquareMap()
 	all_bb := sides[chess.White] | sides[chess.Black]
 
 	for all_bb != 0 {
 		square := all_bb.PopBit()
 		piece := squares[chess.Square(square)]
 		color := piece.Color()
-		if color == chess.NoColor {
-			print(square)
-		}
 
 		score_mg[color] += PVM_MG[piece.Type()]
 		score_mg[color] += PST_MG[piece.Type()][FLIP[color][square]]
@@ -551,38 +523,11 @@ func eval_pos(position *chess.Position) int {
 				KingAttackPoints[color] += inner_ring_attacks.CountBits() *
 					InnerRingAttackPoints[chess.Queen]
 			}
-
-		case chess.King:
-			enemyPoints := KingAttackPoints[color^1]
-
-			// Evaluate semi-open files adjacent to the enemy king
-			kingFile := MaskFile[FileOf(square)]
-			ally := pieces[color][chess.Pawn]
-
-			leftFile := ((kingFile & ClearFile[FileA]) << 1)
-			rightFile := ((kingFile & ClearFile[FileH]) >> 1)
-
-			if kingFile&ally == 0 {
-				enemyPoints += SemiOpenFileNextToKingPenalty
-			}
-
-			if leftFile != 0 && leftFile&ally == 0 {
-				enemyPoints += SemiOpenFileNextToKingPenalty
-			}
-
-			if rightFile != 0 && rightFile&ally == 0 {
-				enemyPoints += SemiOpenFileNextToKingPenalty
-			}
-
-			// Take all the king saftey points collected for the enemy,
-			// and see what kind of penatly we should get.
-			penatly := (enemyPoints * enemyPoints) / 4
-			if KingAttackers[color^1] >= 2 && pieces[color^1][chess.Queen] != 0 {
-				score_mg[color] -= penatly
-			}
 		}
-
 	}
+
+	eval_king(&pieces, chess.White, uint8(board.WhiteKingSq))
+	eval_king(&pieces, chess.Black, uint8(board.BlackKingSq))
 
 	if pieces[chess.White][chess.Bishop].CountBits() == 2 {
 		score_mg[chess.White] += BishopPairBonusMG
@@ -601,16 +546,17 @@ func eval_pos(position *chess.Position) int {
 	eval_eg := score_eg[turn] - score_eg[turn^1]
 
 	phase := TotalPhase
-	phase -= (pieces[chess.White][chess.Pawn].CountBits() +
-		pieces[chess.Black][chess.Pawn].CountBits()) * PawnPhase
-	phase -= (pieces[chess.White][chess.Knight].CountBits() +
-		pieces[chess.Black][chess.Knight].CountBits()) * KnightPhase
-	phase -= (pieces[chess.White][chess.Bishop].CountBits() +
-		pieces[chess.Black][chess.Bishop].CountBits()) * BishopPhase
-	phase -= (pieces[chess.White][chess.Rook].CountBits() +
-		pieces[chess.Black][chess.Rook].CountBits()) * RookPhase
 	phase -= (pieces[chess.White][chess.Queen].CountBits() +
-		pieces[chess.Black][chess.Queen].CountBits()) * QueenPhase
+		pieces[chess.Black][chess.Queen].CountBits()) * phases[chess.Queen]
+	phase -= (pieces[chess.White][chess.Rook].CountBits() +
+		pieces[chess.Black][chess.Rook].CountBits()) * phases[chess.Rook]
+	phase -= (pieces[chess.White][chess.Bishop].CountBits() +
+		pieces[chess.Black][chess.Bishop].CountBits()) * phases[chess.Bishop]
+	phase -= (pieces[chess.White][chess.Knight].CountBits() +
+		pieces[chess.Black][chess.Knight].CountBits()) * phases[chess.Knight]
+	phase -= (pieces[chess.White][chess.Pawn].CountBits() +
+		pieces[chess.Black][chess.Pawn].CountBits()) * phases[chess.Pawn]
+
 	phase = (phase*256 + (TotalPhase / 2)) / TotalPhase
 
 	eval := ((eval_mg * (256 - phase)) + (eval_eg * phase)) / 256
@@ -623,7 +569,41 @@ func eval_pos(position *chess.Position) int {
 	return eval
 }
 
-func is_draw(pieces [2]map[chess.PieceType]chess.Bitboard) bool {
+func eval_king(
+	pieces *[2][7]chess.Bitboard,
+	color chess.Color,
+	square uint8,
+) {
+	enemyPoints := KingAttackPoints[color^1]
+
+	// Evaluate semi-open files adjacent to the enemy king
+	kingFile := MaskFile[FileOf(square)]
+	ally := pieces[color][chess.Pawn]
+
+	leftFile := ((kingFile & ClearFile[FileA]) << 1)
+	rightFile := ((kingFile & ClearFile[FileH]) >> 1)
+
+	if kingFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	if leftFile != 0 && leftFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	if rightFile != 0 && rightFile&ally == 0 {
+		enemyPoints += SemiOpenFileNextToKingPenalty
+	}
+
+	// Take all the king saftey points collected for the enemy,
+	// and see what kind of penatly we should get.
+	penatly := (enemyPoints * enemyPoints) / 4
+	if KingAttackers[color^1] >= 2 && pieces[color^1][chess.Queen] != 0 {
+		score_mg[color] -= penatly
+	}
+}
+
+func is_draw(pieces *[2][7]chess.Bitboard) bool {
 	white_knights := pieces[chess.White][chess.Knight].CountBits()
 	white_bishops := pieces[chess.White][chess.Bishop].CountBits()
 
@@ -663,7 +643,7 @@ func is_draw(pieces [2]map[chess.PieceType]chess.Bitboard) bool {
 	return false
 }
 
-func is_drawish(pieces [2]map[chess.PieceType]chess.Bitboard) bool {
+func is_drawish(pieces [2][7]chess.Bitboard) bool {
 
 	white_pawns := pieces[chess.White][chess.Pawn].CountBits()
 	white_knights := pieces[chess.White][chess.Knight].CountBits()

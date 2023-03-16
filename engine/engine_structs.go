@@ -30,16 +30,7 @@ type EngineClass struct {
 }
 
 type EngineUpgrades struct {
-	move_ordering                bool
-	alphabeta                    bool
-	q_search                     bool
-	delta_pruning                bool
-	iterative_deepening          bool
-	transposition_table          bool
-	killer_moves                 bool
-	pvs                          bool
-	aspiration_window            bool
-	internal_iterative_deepening bool
+	iterative_deepening bool
 }
 
 type EngineCounters struct {

@@ -30,9 +30,9 @@ var (
 
 func standardMoves(pos *Position, first bool) []*Move {
 	// compute allowed destination Bitboard
-	BBAllowed := ^pos.board.whiteSqs
+	BBAllowed := ^pos.board.WhiteSqs
 	if pos.Turn() == Black {
-		BBAllowed = ^pos.board.blackSqs
+		BBAllowed = ^pos.board.BlackSqs
 	}
 	moves := []*Move{}
 	// iterate through pieces to find possible moves
@@ -109,9 +109,9 @@ func addTags(m *Move, pos *Position) {
 }
 
 func isInCheck(pos *Position) bool {
-	kingSq := pos.board.whiteKingSq
+	kingSq := pos.board.WhiteKingSq
 	if pos.Turn() == Black {
-		kingSq = pos.board.blackKingSq
+		kingSq = pos.board.BlackKingSq
 	}
 	// king should only be missing in tests / examples
 	if kingSq == NoSquare {
@@ -122,12 +122,12 @@ func isInCheck(pos *Position) bool {
 
 func squaresAreAttacked(pos *Position, sqs ...Square) bool {
 	otherColor := pos.Turn().Other()
-	occ := ^pos.board.emptySqs
+	occ := ^pos.board.EmptySqs
 	for _, sq := range sqs {
 		// hot path check to see if attack vector is possible
-		s2BB := pos.board.blackSqs
+		s2BB := pos.board.BlackSqs
 		if pos.Turn() == Black {
-			s2BB = pos.board.whiteSqs
+			s2BB = pos.board.WhiteSqs
 		}
 		if ((DiaAttack(occ, sq)|HvAttack(occ, sq))&s2BB)|(BBKnightMoves[sq]&s2BB) == 0 {
 			continue
@@ -187,11 +187,11 @@ func BBForPossibleMoves(pos *Position, pt PieceType, sq Square) Bitboard {
 	case King:
 		return BBKingMoves[sq]
 	case Queen:
-		return DiaAttack(^pos.board.emptySqs, sq) | HvAttack(^pos.board.emptySqs, sq)
+		return DiaAttack(^pos.board.EmptySqs, sq) | HvAttack(^pos.board.EmptySqs, sq)
 	case Rook:
-		return HvAttack(^pos.board.emptySqs, sq)
+		return HvAttack(^pos.board.EmptySqs, sq)
 	case Bishop:
-		return DiaAttack(^pos.board.emptySqs, sq)
+		return DiaAttack(^pos.board.EmptySqs, sq)
 	case Knight:
 		return BBKnightMoves[sq]
 	case Pawn:
@@ -207,7 +207,7 @@ func castleMoves(pos *Position) []*Move {
 	queenSide := pos.castleRights.CanCastle(pos.Turn(), QueenSide)
 	// white king side
 	if pos.turn == White && kingSide &&
-		(^pos.board.emptySqs&(BBForSquare(F1)|BBForSquare(G1))) == 0 &&
+		(^pos.board.EmptySqs&(BBForSquare(F1)|BBForSquare(G1))) == 0 &&
 		!squaresAreAttacked(pos, F1, G1) &&
 		!pos.inCheck {
 		m := &Move{s1: E1, s2: G1}
@@ -217,7 +217,7 @@ func castleMoves(pos *Position) []*Move {
 	}
 	// white queen side
 	if pos.turn == White && queenSide &&
-		(^pos.board.emptySqs&(BBForSquare(B1)|BBForSquare(C1)|BBForSquare(D1))) == 0 &&
+		(^pos.board.EmptySqs&(BBForSquare(B1)|BBForSquare(C1)|BBForSquare(D1))) == 0 &&
 		!squaresAreAttacked(pos, C1, D1) &&
 		!pos.inCheck {
 		m := &Move{s1: E1, s2: C1}
@@ -227,7 +227,7 @@ func castleMoves(pos *Position) []*Move {
 	}
 	// black king side
 	if pos.turn == Black && kingSide &&
-		(^pos.board.emptySqs&(BBForSquare(F8)|BBForSquare(G8))) == 0 &&
+		(^pos.board.EmptySqs&(BBForSquare(F8)|BBForSquare(G8))) == 0 &&
 		!squaresAreAttacked(pos, F8, G8) &&
 		!pos.inCheck {
 		m := &Move{s1: E8, s2: G8}
@@ -237,7 +237,7 @@ func castleMoves(pos *Position) []*Move {
 	}
 	// black queen side
 	if pos.turn == Black && queenSide &&
-		(^pos.board.emptySqs&(BBForSquare(B8)|BBForSquare(C8)|BBForSquare(D8))) == 0 &&
+		(^pos.board.EmptySqs&(BBForSquare(B8)|BBForSquare(C8)|BBForSquare(D8))) == 0 &&
 		!squaresAreAttacked(pos, C8, D8) &&
 		!pos.inCheck {
 		m := &Move{s1: E8, s2: C8}
@@ -255,16 +255,16 @@ func pawnMoves(pos *Position, sq Square) Bitboard {
 		BBEnPassant = BBForSquare(pos.enPassantSquare)
 	}
 	if pos.Turn() == White {
-		capRight := ((BB & ^BBFileH & ^BBRank8) >> 9) & (pos.board.blackSqs | BBEnPassant)
-		capLeft := ((BB & ^BBFileA & ^BBRank8) >> 7) & (pos.board.blackSqs | BBEnPassant)
-		upOne := ((BB & ^BBRank8) >> 8) & pos.board.emptySqs
-		upTwo := ((upOne & BBRank3) >> 8) & pos.board.emptySqs
+		capRight := ((BB & ^BBFileH & ^BBRank8) >> 9) & (pos.board.BlackSqs | BBEnPassant)
+		capLeft := ((BB & ^BBFileA & ^BBRank8) >> 7) & (pos.board.BlackSqs | BBEnPassant)
+		upOne := ((BB & ^BBRank8) >> 8) & pos.board.EmptySqs
+		upTwo := ((upOne & BBRank3) >> 8) & pos.board.EmptySqs
 		return capRight | capLeft | upOne | upTwo
 	}
-	capRight := ((BB & ^BBFileH & ^BBRank1) << 7) & (pos.board.whiteSqs | BBEnPassant)
-	capLeft := ((BB & ^BBFileA & ^BBRank1) << 9) & (pos.board.whiteSqs | BBEnPassant)
-	upOne := ((BB & ^BBRank1) << 8) & pos.board.emptySqs
-	upTwo := ((upOne & BBRank6) << 8) & pos.board.emptySqs
+	capRight := ((BB & ^BBFileH & ^BBRank1) << 7) & (pos.board.WhiteSqs | BBEnPassant)
+	capLeft := ((BB & ^BBFileA & ^BBRank1) << 9) & (pos.board.WhiteSqs | BBEnPassant)
+	upOne := ((BB & ^BBRank1) << 8) & pos.board.EmptySqs
+	upTwo := ((upOne & BBRank6) << 8) & pos.board.EmptySqs
 	return capRight | capLeft | upOne | upTwo
 }
 
@@ -275,12 +275,12 @@ func PawnAttacks(pos *Position, sq Square) Bitboard {
 		BBEnPassant = BBForSquare(pos.enPassantSquare)
 	}
 	if pos.Turn() == White {
-		capRight := ((BB & ^BBFileH & ^BBRank8) >> 9) & (pos.board.blackSqs | BBEnPassant)
-		capLeft := ((BB & ^BBFileA & ^BBRank8) >> 7) & (pos.board.blackSqs | BBEnPassant)
+		capRight := ((BB & ^BBFileH & ^BBRank8) >> 9) & (pos.board.BlackSqs | BBEnPassant)
+		capLeft := ((BB & ^BBFileA & ^BBRank8) >> 7) & (pos.board.BlackSqs | BBEnPassant)
 		return capRight | capLeft
 	}
-	capRight := ((BB & ^BBFileH & ^BBRank1) << 7) & (pos.board.whiteSqs | BBEnPassant)
-	capLeft := ((BB & ^BBFileA & ^BBRank1) << 9) & (pos.board.whiteSqs | BBEnPassant)
+	capRight := ((BB & ^BBFileH & ^BBRank1) << 7) & (pos.board.WhiteSqs | BBEnPassant)
+	capLeft := ((BB & ^BBFileA & ^BBRank1) << 9) & (pos.board.WhiteSqs | BBEnPassant)
 	return capRight | capLeft
 }
 
