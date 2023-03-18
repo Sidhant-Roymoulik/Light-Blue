@@ -6,7 +6,7 @@ import (
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
-func play_self(white light_blue, black light_blue, game *chess.Game) {
+func play_self(white *Engine, black *Engine, game *chess.Game) {
 	white.reset()
 	black.reset()
 
@@ -38,7 +38,7 @@ func play_self(white light_blue, black light_blue, game *chess.Game) {
 			panic(err)
 		}
 
-		var engine light_blue = white
+		var engine *Engine = white
 		if game.Position().Turn() == chess.White {
 			engine = black
 		}

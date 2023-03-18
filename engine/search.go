@@ -9,8 +9,8 @@ import (
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
-func new_light_blue() light_blue {
-	return light_blue{
+func new_light_blue() Engine {
+	return Engine{
 		EngineClass{
 			name:   "Light Blue 1",
 			author: "Sidhant Roymoulik",
@@ -32,7 +32,7 @@ func new_light_blue() light_blue {
 	}
 }
 
-func (e *light_blue) run(position *chess.Position) (
+func (e *Engine) run(position *chess.Position) (
 	best_eval int, best_move *chess.Move,
 ) {
 	e.resetCounters()
@@ -57,7 +57,7 @@ func (e *light_blue) run(position *chess.Position) (
 	return
 }
 
-func (e *light_blue) iterative_deepening(
+func (e *Engine) iterative_deepening(
 	position *chess.Position, pvLine *PVLine,
 ) (best_eval int, best_move *chess.Move) {
 	e.start = time.Now()
@@ -102,7 +102,7 @@ func (e *light_blue) iterative_deepening(
 	return best_eval, best_move
 }
 
-func (e *light_blue) aspiration_window(
+func (e *Engine) aspiration_window(
 	position *chess.Position, max_depth int, pvLine *PVLine,
 ) (eval int) {
 
@@ -152,7 +152,7 @@ func (e *light_blue) aspiration_window(
 	return eval
 }
 
-func (e *light_blue) pv_search(
+func (e *Engine) pv_search(
 	position *chess.Position,
 	ply int,
 	max_depth int,
@@ -326,8 +326,8 @@ func (e *light_blue) pv_search(
 		// Late Move Pruning
 		if !isPVNode && !inCheck && depth <= 5 &&
 			i >= LateMovePruningMargins[depth] {
-			if !(position.Update(move).InCheck() ||
-				move.Promo() != chess.NoPieceType) {
+			if !move.HasTag(chess.Check) &&
+				move.Promo() == chess.NoPieceType {
 				e.counters.lmp_pruned++
 				continue
 			}
@@ -336,7 +336,10 @@ func (e *light_blue) pv_search(
 		// Futility Pruning
 		if canFutilityPrune &&
 			i > 0 &&
-			!is_q_move(move) {
+			!move.HasTag(chess.Check) &&
+			!move.HasTag(chess.Capture) &&
+			!move.HasTag(chess.EnPassant) &&
+			move.Promo() == chess.NoPieceType {
 			e.counters.futility_pruned++
 			continue
 		}
@@ -430,7 +433,7 @@ func (e *light_blue) pv_search(
 	return alpha
 }
 
-func (e *light_blue) q_search(
+func (e *Engine) q_search(
 	position *chess.Position,
 	depth int,
 	alpha int,

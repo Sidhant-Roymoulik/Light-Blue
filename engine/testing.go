@@ -1,7 +1,7 @@
 package engine
 
-var timeLeft int64 = 10 * 1000
-var increment int64 = 100
+var timeLeft int64 = 2 * 60 * 1000
+var increment int64 = 0
 var moveTime int64 = NoValue
 var movesToGo int16 = 40
 var maxDepth uint8 = 100
@@ -9,15 +9,15 @@ var maxNodeCount uint64 = 1000000000
 
 func RunEngine() {
 
-	// test_play_self()
+	test_play_self()
 
 	// test_benchmark()
 
-	run_uci()
+	// run_uci()
 }
 
 func test_play_self() {
-	game := game_from_opening("Sicilian Defense")
+	game := game_from_opening("Start Position")
 	engine_1 := new_light_blue()
 	engine_1.timer.Setup(
 		timeLeft,
@@ -36,7 +36,7 @@ func test_play_self() {
 		maxDepth,
 		maxNodeCount,
 	)
-	play_self(engine_1, engine_2, game)
+	play_self(&engine_1, &engine_2, game)
 }
 
 func test_benchmark() {
@@ -49,7 +49,7 @@ func test_benchmark() {
 		maxDepth,
 		maxNodeCount,
 	)
-	engines := []light_blue{engine_1}
+	engines := []*Engine{&engine_1}
 	benchmark_engines(engines, game_from_fen("rn1qkb1r/pp2pppp/5n2/3p1b2/3P4/2N1P3/PP3PPP/R1BQKBNR w KQkq - 0 1").Position())
 }
 

@@ -11,7 +11,7 @@ import (
 // Adapted from https://github.com/0hq/antikythera/blob/main/benchmark.go#L24
 
 func benchmark(
-	ply int, e light_blue, pos *chess.Position, rows [][]interface{},
+	ply int, e *Engine, pos *chess.Position, rows [][]interface{},
 ) [][]interface{} {
 	e.setBenchmarkMode(ply)
 	e.resetZobrist()
@@ -46,7 +46,7 @@ func benchmark(
 	return rows
 }
 
-func benchmark_range(plymin int, plymax int, e light_blue, pos *chess.Position) {
+func benchmark_range(plymin int, plymax int, e *Engine, pos *chess.Position) {
 	rows := [][]interface{}{}
 	for i := plymin; i <= plymax; i++ {
 		rows = benchmark(i, e, pos, rows)
@@ -72,9 +72,9 @@ func benchmark_range(plymin int, plymax int, e light_blue, pos *chess.Position) 
 	}
 }
 
-func benchmark_engines(engines []light_blue, pos *chess.Position) {
+func benchmark_engines(engines []*Engine, pos *chess.Position) {
 	for _, e := range engines {
 		e.reset()
-		benchmark_range(1, 9, e, pos)
+		benchmark_range(1, 8, e, pos)
 	}
 }

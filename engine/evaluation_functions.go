@@ -526,9 +526,11 @@ func eval_pos(position *chess.Position) int {
 		}
 	}
 
+	// King Evaluation
 	eval_king(&pieces, chess.White, uint8(board.WhiteKingSq))
 	eval_king(&pieces, chess.Black, uint8(board.BlackKingSq))
 
+	// Bishop Pair Bonus
 	if pieces[chess.White][chess.Bishop].CountBits() == 2 {
 		score_mg[chess.White] += BishopPairBonusMG
 		score_eg[chess.White] += BishopPairBonusEG
@@ -569,6 +571,7 @@ func eval_pos(position *chess.Position) int {
 	return eval
 }
 
+// King Evaluation
 func eval_king(
 	pieces *[2][7]chess.Bitboard,
 	color chess.Color,
@@ -584,7 +587,7 @@ func eval_king(
 	rightFile := ((kingFile & ClearFile[FileH]) >> 1)
 
 	if kingFile&ally == 0 {
-		enemyPoints += SemiOpenFileNextToKingPenalty
+		enemyPoints += 4 * SemiOpenFileNextToKingPenalty
 	}
 
 	if leftFile != 0 && leftFile&ally == 0 {

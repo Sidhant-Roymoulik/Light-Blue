@@ -14,7 +14,7 @@ import (
 )
 
 type UCIEngine struct {
-	engine light_blue
+	engine *Engine
 	game   *chess.Game
 	moves  uint16
 
@@ -27,7 +27,7 @@ type UCIEngine struct {
 
 func (e *UCIEngine) reset() {
 	*e = UCIEngine{}
-	e.engine = new_light_blue()
+	*e.engine = new_light_blue()
 }
 
 func (e *UCIEngine) uci() {

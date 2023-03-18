@@ -8,7 +8,7 @@ import (
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
-type light_blue struct {
+type Engine struct {
 	EngineClass
 	max_ply           int
 	start             time.Time
@@ -83,18 +83,18 @@ func (pvLine PVLine) String() string {
 
 // -----------------------------------------------------------------------------
 
-func (e *light_blue) getName() string {
+func (e *Engine) getName() string {
 	return e.name
 }
 
-func (e *light_blue) getAuthor() string {
+func (e *Engine) getAuthor() string {
 	if e.author == "" {
 		return "Sidhant Roymoulik"
 	}
 	return e.author
 }
 
-func (e *light_blue) printSearchStats() {
+func (e *Engine) printSearchStats() {
 	print("Nodes explored:", e.counters.nodes_searched)
 	print("Q-Nodes explored:", e.counters.q_nodes_searched)
 	print("Hashes Used:", e.counters.hashes_used)
@@ -107,13 +107,13 @@ func (e *light_blue) printSearchStats() {
 	print("IID Moves Found:", e.counters.iid_move_found)
 }
 
-func (e *light_blue) setBenchmarkMode(ply int) {
+func (e *Engine) setBenchmarkMode(ply int) {
 	e.upgrades.iterative_deepening = false
 	e.max_ply = ply
 	e.timer.MaxDepth = uint8(ply)
 }
 
-func (e *light_blue) addKillerMove(move *chess.Move, ply int) {
+func (e *Engine) addKillerMove(move *chess.Move, ply int) {
 	if !move.HasTag(chess.Capture) && move.Promo() == chess.NoPieceType &&
 		move != e.killer_moves[ply][0] {
 		e.killer_moves[ply][1] = e.killer_moves[ply][0]
@@ -122,17 +122,17 @@ func (e *light_blue) addKillerMove(move *chess.Move, ply int) {
 }
 
 // adds to zobrist history, which is used for draw detection
-func (e *light_blue) Add_Zobrist_History(hash uint64) {
+func (e *Engine) Add_Zobrist_History(hash uint64) {
 	e.zobristHistoryPly++
 	e.zobristHistory[e.zobristHistoryPly] = hash
 }
 
 // decrements ply counter, which means history will be overwritten
-func (e *light_blue) Remove_Zobrist_History() {
+func (e *Engine) Remove_Zobrist_History() {
 	e.zobristHistoryPly--
 }
 
-func (e *light_blue) Is_Draw_By_Repetition(hash uint64) bool {
+func (e *Engine) Is_Draw_By_Repetition(hash uint64) bool {
 	for i := uint16(0); i < e.zobristHistoryPly; i++ {
 		if e.zobristHistory[i] == hash {
 			return true
@@ -141,7 +141,7 @@ func (e *light_blue) Is_Draw_By_Repetition(hash uint64) bool {
 	return false
 }
 
-func (e *light_blue) resetCounters() {
+func (e *Engine) resetCounters() {
 	e.counters.nodes_searched = 0
 	e.counters.q_nodes_searched = 0
 	e.counters.hashes_used = 0
@@ -153,31 +153,31 @@ func (e *light_blue) resetCounters() {
 	e.counters.iid_move_found = 0
 }
 
-func (e *light_blue) resetKillerMoves() {
+func (e *Engine) resetKillerMoves() {
 	for i := 0; i < len(e.killer_moves); i++ {
 		e.killer_moves[i][0] = nil
 		e.killer_moves[i][1] = nil
 	}
 }
 
-func (e *light_blue) resetZobrist() {
+func (e *Engine) resetZobrist() {
 	e.zobristHistory = [1024]uint64{}
 	e.zobristHistoryPly = 0
 }
 
-func (e *light_blue) resizeTT(sizeInMB uint64, entrySize uint64) {
+func (e *Engine) resizeTT(sizeInMB uint64, entrySize uint64) {
 	e.tt.Resize(sizeInMB, entrySize)
 }
 
-func (e *light_blue) clearTT() {
+func (e *Engine) clearTT() {
 	e.tt.Clear()
 }
 
-func (e *light_blue) uninitializeTT() {
+func (e *Engine) uninitializeTT() {
 	e.tt.Unitialize()
 }
 
-func (e *light_blue) reset() {
+func (e *Engine) reset() {
 	e.max_ply = 0
 	e.age = 0
 	e.prev_guess = 0
