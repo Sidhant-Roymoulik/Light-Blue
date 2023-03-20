@@ -9,11 +9,50 @@ import (
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
 )
 
+// -----------------------------------------------------------------------------
+//	Search Parameters
+// -----------------------------------------------------------------------------
+
+const (
+	Window int = 12
+
+	StaticNullMovePruningBaseMargin int = 85
+	NMR_Depth_Limit                 int = 2
+	FutilityPruningDepthLimit       int = 8
+	IID_Depth_Limit                 int = 4
+	IID_Depth_Reduction             int = 2
+)
+
+var FutilityMargins = [9]int{
+	0,
+	100, // depth 1
+	160, // depth 2
+	220, // depth 3
+	280, // depth 4
+	340, // depth 5
+	400, // depth 6
+	460, // depth 7
+	520, // depth 8
+}
+
+var LateMovePruningMargins = [6]int{
+	0,
+	8,  // depth 1
+	12, // depth 2
+	16, // depth 3
+	20, // depth 4
+	24, // depth 5
+}
+
+// -----------------------------------------------------------------------------
+//	Engine Definition
+// -----------------------------------------------------------------------------
+
 func new_light_blue() Engine {
 	return Engine{
 		EngineClass{
-			name:   "Light Blue 1",
-			author: "Sidhant Roymoulik",
+			name:   name,
+			author: author,
 			upgrades: EngineUpgrades{
 				iterative_deepening: true,
 			},
@@ -32,9 +71,13 @@ func new_light_blue() Engine {
 	}
 }
 
-func (e *Engine) run(position *chess.Position) (
-	best_eval int, best_move *chess.Move,
-) {
+// -----------------------------------------------------------------------------
+//	Search Functions
+// -----------------------------------------------------------------------------
+
+func (e *Engine) run(
+	position *chess.Position,
+) (best_eval int, best_move *chess.Move) {
 	e.resetCounters()
 	e.resetKillerMoves()
 
@@ -57,6 +100,7 @@ func (e *Engine) run(position *chess.Position) (
 	return
 }
 
+// Iterative Deepening
 func (e *Engine) iterative_deepening(
 	position *chess.Position, pvLine *PVLine,
 ) (best_eval int, best_move *chess.Move) {
@@ -102,56 +146,41 @@ func (e *Engine) iterative_deepening(
 	return best_eval, best_move
 }
 
+// Aspiration window adapted from https://github.com/Aryan1508/Bit-Genie
 func (e *Engine) aspiration_window(
 	position *chess.Position, max_depth int, pvLine *PVLine,
 ) (eval int) {
 
-	if max_depth == 1 {
-		eval = e.pv_search(
-			position, 0, max_depth, -math.MaxInt, math.MaxInt, pvLine, true,
-		)
-		return eval
+	alpha := -CHECKMATE_VALUE
+	beta := CHECKMATE_VALUE
+	delta := Window
+
+	if max_depth > 1 {
+		w := Window - Min(6, max_depth/3)
+		alpha = Max(e.prev_guess-w, -CHECKMATE_VALUE)
+		beta = Min(e.prev_guess+w, CHECKMATE_VALUE)
 	}
 
-	alpha := e.prev_guess - WINDOW_VALUE_TIGHT
-	beta := e.prev_guess + WINDOW_VALUE_TIGHT
+	for {
+		eval = e.pv_search(position, 0, max_depth, alpha, beta, pvLine, true)
 
-	eval = e.pv_search(
-		position, 0, max_depth, alpha, beta, pvLine, true,
-	)
+		if eval <= alpha {
+			beta = (alpha + beta) / 2
+			alpha = Max(alpha-delta, -CHECKMATE_VALUE)
+		} else if eval >= beta {
+			beta = Min(beta+delta, CHECKMATE_VALUE)
+		} else {
+			break
+		}
 
-	if eval <= alpha {
-		if DEBUG {
-			print("Aspiration tight fail low")
-		}
-		beta = (alpha + beta) / 2
-		alpha = e.prev_guess - WINDOW_VALUE
-		eval = e.pv_search(
-			position, 0, max_depth, alpha, beta, pvLine, true,
-		)
-	} else if eval >= beta {
-		if DEBUG {
-			print("Aspiration tight fail high")
-		}
-		alpha = (alpha + beta) / 2
-		beta = e.prev_guess + WINDOW_VALUE
-		eval = e.pv_search(
-			position, 0, max_depth, alpha, beta, pvLine, true,
-		)
-	}
-
-	if eval <= alpha || eval >= beta {
-		if DEBUG {
-			print("Aspiration loose fail")
-		}
-		eval = e.pv_search(
-			position, 0, max_depth, -math.MaxInt, math.MaxInt, pvLine, true,
-		)
+		delta *= 3
+		delta /= 2
 	}
 
 	return eval
 }
 
+// Principal-Variation Search
 func (e *Engine) pv_search(
 	position *chess.Position,
 	ply int,
@@ -296,7 +325,7 @@ func (e *Engine) pv_search(
 	// 		-beta,
 	// 		-alpha,
 	// 		&childPVLine,
-	// 		true,
+	// 		do_null,
 	// 	)
 	// 	if len(childPVLine.Moves) > 0 {
 	// 		e.counters.iid_move_found++
@@ -361,7 +390,7 @@ func (e *Engine) pv_search(
 				-beta,
 				-alpha,
 				&childPVLine,
-				false,
+				do_null,
 			)
 		} else {
 			// Null-Window Search
@@ -383,7 +412,7 @@ func (e *Engine) pv_search(
 					-beta,
 					-new_eval,
 					&childPVLine,
-					true,
+					do_null,
 				)
 			}
 		}
@@ -433,6 +462,7 @@ func (e *Engine) pv_search(
 	return alpha
 }
 
+// Quiescence Search
 func (e *Engine) q_search(
 	position *chess.Position,
 	depth int,

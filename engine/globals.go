@@ -37,27 +37,4 @@ const (
 	MATE_CUTOFF     int           = CHECKMATE_VALUE / 2
 	MAX_DEPTH       int           = 100
 	TIMER_CHECK     uint64        = (1 << 10) - 1
-
-	WINDOW_VALUE_TIGHT int = 25
-	WINDOW_VALUE       int = 100
-
-	StaticNullMovePruningBaseMargin int = 85
-	NMR_Depth_Limit                 int = 2
-	FutilityPruningDepthLimit       int = 8
-	IID_Depth_Limit                 int = 4
-	IID_Depth_Reduction             int = 2
 )
-
-var FutilityMargins = [9]int{
-	0,
-	100, // depth 1
-	160, // depth 2
-	220, // depth 3
-	280, // depth 4
-	340, // depth 5
-	400, // depth 6
-	460, // depth 7
-	520, // depth 8
-}
-
-var LateMovePruningMargins = [6]int{0, 8, 12, 16, 20, 24}

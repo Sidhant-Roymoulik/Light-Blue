@@ -27,7 +27,8 @@ type UCIEngine struct {
 
 func (e *UCIEngine) reset() {
 	*e = UCIEngine{}
-	*e.engine = new_light_blue()
+	engine := new_light_blue()
+	e.engine = &engine
 }
 
 func (e *UCIEngine) uci() {
