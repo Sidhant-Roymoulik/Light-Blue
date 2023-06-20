@@ -37,19 +37,10 @@ func MVV_LVA(move *chess.Move, board *chess.Board) int {
 // -----------------------------------------------------------------------------
 
 func is_q_move(move *chess.Move) bool {
-	if move.HasTag(chess.Capture) {
-		return true
-	}
-	if move.HasTag(chess.EnPassant) {
-		return true
-	}
-	if move.HasTag(chess.Check) {
-		return true
-	}
-	if move.Promo() != chess.NoPieceType {
-		return true
-	}
-	return false
+	return move.HasTag(chess.Capture) ||
+		move.HasTag(chess.EnPassant) ||
+		move.HasTag(chess.Check) ||
+		move.Promo() != chess.NoPieceType
 }
 
 func get_q_moves(position *chess.Position) []*chess.Move {

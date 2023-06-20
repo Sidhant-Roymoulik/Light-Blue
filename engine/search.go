@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"math"
-	"runtime"
 	"time"
 
 	"github.com/Sidhant-Roymoulik/Light-Blue/chess"
@@ -67,7 +66,6 @@ func new_light_blue() Engine {
 		0,
 		0,
 		[MAX_DEPTH][2]*chess.Move{},
-		runtime.GOMAXPROCS(0),
 	}
 }
 
@@ -173,8 +171,7 @@ func (e *Engine) aspiration_window(
 			break
 		}
 
-		delta *= 3
-		delta /= 2
+		delta *= 2
 	}
 
 	return eval
@@ -363,12 +360,7 @@ func (e *Engine) pv_search(
 		}
 
 		// Futility Pruning
-		if canFutilityPrune &&
-			i > 0 &&
-			!move.HasTag(chess.Check) &&
-			!move.HasTag(chess.Capture) &&
-			!move.HasTag(chess.EnPassant) &&
-			move.Promo() == chess.NoPieceType {
+		if canFutilityPrune && i > 0 && !is_q_move(move) {
 			e.counters.futility_pruned++
 			continue
 		}
@@ -521,4 +513,52 @@ func (e *Engine) q_search(
 	}
 
 	return alpha
+}
+
+// -----------------------------------------------------------------------------
+// 		Zobrist History for Draw by Repetition Detection
+// 		(Adapted from https://github.com/algerbrex/blunder)
+// -----------------------------------------------------------------------------
+
+// adds to zobrist history, which is used for draw detection
+func (e *Engine) Add_Zobrist_History(hash uint64) {
+	e.zobristHistoryPly++
+	e.zobristHistory[e.zobristHistoryPly] = hash
+}
+
+// decrements ply counter, which means history will be overwritten
+func (e *Engine) Remove_Zobrist_History() {
+	e.zobristHistoryPly--
+}
+
+func (e *Engine) Is_Draw_By_Repetition(hash uint64) bool {
+	for i := uint16(0); i < e.zobristHistoryPly; i++ {
+		if e.zobristHistory[i] == hash {
+			return true
+		}
+	}
+	return false
+}
+
+func (e *Engine) resetZobrist() {
+	e.zobristHistory = [1024]uint64{}
+	e.zobristHistoryPly = 0
+}
+
+// -----------------------------------------------------------------------------
+// 		Killer Moves
+// -----------------------------------------------------------------------------
+
+func (e *Engine) addKillerMove(move *chess.Move, ply int) {
+	if !move.HasTag(chess.Capture) && move != e.killer_moves[ply][0] {
+		e.killer_moves[ply][1] = e.killer_moves[ply][0]
+		e.killer_moves[ply][0] = move
+	}
+}
+
+func (e *Engine) resetKillerMoves() {
+	for i := 0; i < len(e.killer_moves); i++ {
+		e.killer_moves[i][0] = nil
+		e.killer_moves[i][1] = nil
+	}
 }

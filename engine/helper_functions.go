@@ -61,9 +61,7 @@ func getMateOrCPScore(score int) string {
 		pliesToMate := CHECKMATE_VALUE - score
 		mateInN := (pliesToMate / 2) + (pliesToMate % 2)
 		return fmt.Sprintf("mate %d", mateInN)
-	}
-
-	if score < -MATE_CUTOFF {
+	} else if score < -MATE_CUTOFF {
 		pliesToMate := -CHECKMATE_VALUE - score
 		mateInN := (pliesToMate / 2) + (pliesToMate % 2)
 		return fmt.Sprintf("mate %d", mateInN)
