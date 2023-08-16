@@ -1,5 +1,5 @@
 # Light Blue
-A UCI-Compatible Chess Engine Built in Golang
+First attempt at a UCI-Compatible Chess Engine Built in Golang
 
 ---
 
@@ -30,7 +30,7 @@ A UCI-Compatible Chess Engine Built in Golang
 
 ### B-Tier Upgrades
 
- - [ ] Lazy SMP (Parrallelize Engine using Golang)
+ - [ ] Lazy SMP (Parallelize Engine using Golang)
  - [x] Check Extension
  - [x] Static Move Pruning
  - [x] Razoring
