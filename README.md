@@ -1,5 +1,5 @@
 # Light Blue
-A Chess Engine Built in Golang
+First attempt at a UCI-Compatible Chess Engine Built in Golang
 
 ---
 
@@ -9,13 +9,14 @@ A Chess Engine Built in Golang
 
  - [x] DFS
  - [x] Alpha-Beta Pruning
+ - [x] Time Management
+ - [x] UCI Protocol
 
 ### S-Tier Upgrades
 
  - [x] Piece Square Tables
  - [x] Quiescence Search
  - [x] Transposition/Hash Tables
- - [ ] UCI Protocol
 
 ### A-Tier Upgrades
 
@@ -23,23 +24,25 @@ A Chess Engine Built in Golang
  - [x] Move Picking
  - [x] Principal-Variation + Null-Window Search
  - [x] Aspiration Window
- - [ ] Null Move Pruning
- - [x] Time Management
+ - [x] Null Move Pruning
+ - [x] Openings
+ - [ ] Tablebases
 
 ### B-Tier Upgrades
 
- - [ ] Lazy SMP (Parrallelize Engine using Golang)
- - [ ] Razoring
- - [ ] Reverse Futility Pruning
+ - [ ] Lazy SMP (Parallelize Engine using Golang)
+ - [x] Check Extension
+ - [x] Static Move Pruning
+ - [x] Razoring
+ - [x] Extended Futility Pruning
+ - [ ] Internal Iterative Deepening
+ - [x] Late Move Pruning
+ - [ ] Late Move Reduction
  - [ ] Singular Extensions
- - [ ] Openings
- - [ ] Tablebases
 
 ### C-Tier Upgrades
 
- - [ ] MTD(f) & MTD(bi)
  - [x] Killer Moves Heuristic
- - [ ] Anything Else I Can Think Of
 
 ---
 

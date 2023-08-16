@@ -1,5 +1,7 @@
 module github.com/Sidhant-Roymoulik/Light-Blue
 
-go 1.19
+go 1.20
 
-require github.com/Sidhant-Roymoulik/chess v0.0.0-20221225005003-505bdb3b4c69
+require github.com/bndr/gotabulate v1.1.2
+
+require github.com/stretchr/testify v1.8.2 // indirect
